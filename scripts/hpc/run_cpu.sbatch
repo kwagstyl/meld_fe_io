@@ -27,7 +27,7 @@
 ##SBATCH --no-requeue
 
 #! For 6GB per CPU, set "-p skylake"; for 12GB per CPU, set "-p skylake-himem": 
-#SBATCH -p skylake-himem
+#SBATCH -p skylake
 
 #! sbatch directives end here (put any additional directives above this line)
 
@@ -59,8 +59,8 @@ module load miniconda/3
 #source activate ~/.conda/envs/meld
 
 #! Full path to application executable: 
-CONDA_PATH="$HOME/.conda/envs/meld"
-MELD_PATH="$HOME/software/meld_classifier"
+CONDA_PATH="$HOME/.conda/envs/meld_fe"
+MELD_PATH="$HOME/software/meld_fe_io"
 application="source activate $CONDA_PATH; $CONDA_PATH/bin/python $MELD_PATH/scripts/Run_combat_save_combat_parameters.py; $CONDA_PATH/bin/python $MELD_PATH/scripts/Normalise_combat_data.py"
 
 #! Run options for the application:
