@@ -503,6 +503,10 @@ class SubjectLoader:
         img_array = sitk.GetArrayFromImage(img)
         seg_array = sitk.GetArrayFromImage(seg)
 
+        if seg_array.shape[0:2] != img_array.shape[0:2]:
+            warnings.warn(f"CAUTION: There is an array size mismatch between the MR volume, {img_array.shape}, and the Segmentation map, {seg_array.shape}."
+                          f"This may affect acuracy of overlapped visualisation.")
+
         if x is None or y is None or z is None:
             coords = self.coords_extract(seg_array)
             if x is None:
@@ -512,50 +516,52 @@ class SubjectLoader:
             if z is None:
                 z = coords[2]
 
+        seg_array = np.ma.masked_where(seg_array == 0, seg_array)
+
         window = np.max(img_array) - np.min(img_array)
 
         level = window / 2 + np.min(img_array)
 
-        low, high = self.wl_to_lh(window, level)
+        #low, high = self.wl_to_lh(window, level)
 
         # Display the orthogonal slices
         if not display_seg:
             fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(10, 4))
 
-            ax1.imshow(img_array[x,:,:], cmap=colormap, clim=(low, high))
-            ax2.imshow(img_array[:,y,:], origin='lower', cmap=colormap, clim=(low, high))
-            ax3.imshow(img_array[:,:,z], origin='lower', cmap=colormap, clim=(low, high))
+            ax1.imshow(img_array[x,:,:], cmap=colormap)
+            ax2.imshow(img_array[:,y,:], origin='lower', cmap=colormap)
+            ax3.imshow(img_array[:,:,z], origin='lower', cmap=colormap)
 
         else:
 
             if not superimpose:
                 fig, ((ax1, ax2, ax3), (ax4, ax5, ax6)) = plt.subplots(2, 3, figsize=(10, 4))
 
-                ax1.imshow(img_array[x,:,:], cmap=colormap, clim=(low, high))
-                ax2.imshow(img_array[:,y,:], origin='lower', cmap=colormap, clim=(low, high))
-                ax3.imshow(img_array[:,:,z], origin='lower', cmap=colormap, clim=(low, high))
+                ax1.imshow(img_array[x,:,:], cmap=colormap)
+                ax2.imshow(img_array[:,y,:], origin='lower', cmap=colormap)
+                ax3.imshow(img_array[:,:,z], origin='lower', cmap=colormap)
 
-                ax4.imshow(seg_array[x,:,:], cmap=colormap, clim=(low, high))
-                ax5.imshow(seg_array[:,y,:], origin='lower', cmap=colormap, clim=(low, high))
-                ax6.imshow(seg_array[:,:,z], origin='lower', cmap=colormap, clim=(low, high))
+                ax4.imshow(seg_array[x,:,:], cmap=colormap)
+                ax5.imshow(seg_array[:,y,:], origin='lower', cmap=colormap)
+                ax6.imshow(seg_array[:,:,z], origin='lower', cmap=colormap)
 
             else:
                 fig, ((ax1, ax2, ax3), (ax4, ax5, ax6)) = plt.subplots(2, 3, figsize=(10, 4))
 
-                ax1.imshow(img_array[x,:,:], cmap=colormap, clim=(low, high))
+                ax1.imshow(img_array[x,:,:], cmap=colormap)
 
-                ax2.imshow(img_array[:,y,:], origin='lower', cmap=colormap, clim=(low, high))
+                ax2.imshow(img_array[:,y,:], origin='lower', cmap=colormap)
 
-                ax3.imshow(img_array[:,:,z], origin='lower', cmap=colormap, clim=(low, high))
+                ax3.imshow(img_array[:,:,z], origin='lower', cmap=colormap)
 
-                ax4.imshow(img_array[x,:,:], cmap=colormap, clim=(low, high))
-                ax4.imshow(seg_array[x,:,:], cmap="jet", alpha=0.2, clim=(low, high))
+                ax4.imshow(img_array[x,:,:], cmap=colormap)
+                ax4.imshow(seg_array[x,:,:], cmap="jet", alpha=0.2)
 
-                ax5.imshow(img_array[:,y,:], origin='lower', cmap=colormap, clim=(low, high))
-                ax5.imshow(seg_array[:,y,:], origin='lower', cmap="jet", alpha=0.2, clim=(low, high))
+                ax5.imshow(img_array[:,y,:], origin='lower', cmap=colormap)
+                ax5.imshow(seg_array[:,y,:], origin='lower', cmap="jet", alpha=0.2)
 
-                ax6.imshow(img_array[:,:,z], origin='lower', cmap=colormap, clim=(low, high))
-                ax6.imshow(seg_array[:,:,z], origin='lower', cmap="jet", alpha=0.2, clim=(low, high))
+                ax6.imshow(img_array[:,:,z], origin='lower', cmap=colormap)
+                ax6.imshow(seg_array[:,:,z], origin='lower', cmap="jet", alpha=0.2)
 
         if save_name is not None:
             plt.savefig(f"{save_name}", dpi=600)
