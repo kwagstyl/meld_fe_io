@@ -26,7 +26,7 @@ def ants_coregister_to_fixed(moving_file, ref_file, output_file, save_transform=
         shutil.copy(mytx['fwdtransforms'][1], save_transform+'.mat')
 
 
-def ants_coregister_with_tranfsorm(moving_file,  ref_file, output_file, transform_file):
+def ants_coregister_with_transform(moving_file,  ref_file, output_file, transform_file):
     fixed = ants.image_read(ref_file)
     moving = ants.image_read(moving_file)
     mytx = ants.apply_transforms(fixed=fixed, moving=moving, transformlist=[transform_file+'.nii.gz',transform_file+'.mat'])
