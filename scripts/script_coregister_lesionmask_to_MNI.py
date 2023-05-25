@@ -26,13 +26,13 @@ def harmonise_bids_name(name):
     
     return harmo_name
 
-BIDS_dir = '/media/mathilde/MELD2/MELD2/DATA/MELD_H21/MELD_BIDS'
+BIDS_dir = '/media/mathilde/MELD2/MELD2/DATA/MELD_H108/MELD_BIDS'
 ref_file_stripped = '/home/mathilde/Documents/scripts/meld_fe_io/data/template/mni_icbm152_t1_tal_nlin_sym_09a_brain.nii'
-output_dir = '/media/mathilde/MELD2/MELD2/DATA/MELD_H21/MELD_BIDS_mni'
+output_dir = '/media/mathilde/MELD2/MELD2/DATA/MELD_H108/MELD_BIDS_mni'
 
 # load info histo
 
-df = pd.read_csv('/media/mathilde/MELD2/MELD2/DATA/MELD_H21/MELD_participants_infos_H21_annoted.csv') 
+df = pd.read_csv('/media/mathilde/MELD2/MELD2/DATA/MELD_H108/MELD_participants_infos_H108.csv') 
 
 
 #define subjects
@@ -55,7 +55,7 @@ for subject in subjects_included:
     #get T1 and lesion mask if exists
     T1_file = glob.glob(os.path.join(BIDS_dir,subject, 'anat','*_preop_T1w.nii.gz'))[0]
     try:
-        lesion_mask_file = glob.glob(os.path.join(BIDS_dir,subject, 'anat','*_lesion_MASK.nii.gz'))[0]
+        lesion_mask_file = glob.glob(os.path.join(BIDS_dir,subject, 'anat','*_lesion_mask.nii.gz'))[0]
     except:
         lesion_mask_file = None
         print(f'no lesion mask for subject {subject}')
