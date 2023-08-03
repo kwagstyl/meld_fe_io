@@ -141,7 +141,7 @@ class DisplayModalities:
                 ax6.set_xticks([])
 
             else:
-                fig, ((ax1, ax2, ax3), (ax4, ax5, ax6), (ax7, ax8, ax9)) = plt.subplots(3, 3, figsize=(10, 4))
+                fig, ((ax1, ax2, ax3), (ax4, ax5, ax6), (ax7, ax8, ax9)) = plt.subplots(3, 3, figsize=(6, 4))
 
                 ax1.imshow(img1_array[x,:,:], cmap='gray')
                 ax2.imshow(img1_array[:,y,:], origin='lower', cmap='gray')
@@ -193,7 +193,7 @@ class DisplayModalities:
                     z = coords[2]
 
             if not superimpose:  # note if seg is provided, seg is always sueperimosed
-                fig, ((ax1, ax2, ax3), (ax4, ax5, ax6)) = plt.subplots(2, 3, figsize=(10, 4))
+                fig, ((ax1, ax2, ax3), (ax4, ax5, ax6)) = plt.subplots(2, 3, figsize=(10,10))
 
                 ax1.imshow(img1_array[x,:,:], cmap='gray')
                 ax1.imshow(seg_array[x,:,:], origin='lower', cmap='jet', alpha=0.3)
@@ -223,7 +223,7 @@ class DisplayModalities:
                 ax6.set_yticks([])
 
             else:
-                fig, ((ax1, ax2, ax3), (ax4, ax5, ax6), (ax7, ax8, ax9)) = plt.subplots(3, 3, figsize=(10, 4))
+                fig, ((ax1, ax2, ax3), (ax4, ax5, ax6), (ax7, ax8, ax9)) = plt.subplots(3, 3, figsize=(10, 10))
 
                 ax1.imshow(img1_array[x,:,:], cmap='gray')
                 ax1.imshow(seg_array[x,:,:], origin='lower', cmap='jet', alpha=0.3)
