@@ -26,24 +26,23 @@ def harmonise_bids_name(name):
     
     return harmo_name
 
-BIDS_dir = '/media/mathilde/MELD2/MELD2/DATA/MELD_H108/MELD_BIDS'
+site_code='H28'
+BIDS_dir = f'/home/mathilde/Documents/RDS/MELD_FE/DATA/MELD_{site_code}/MELD_BIDS'
 ref_file_stripped = '/home/mathilde/Documents/scripts/meld_fe_io/data/template/mni_icbm152_t1_tal_nlin_sym_09a_brain.nii'
-output_dir = '/media/mathilde/MELD2/MELD2/DATA/MELD_H108/MELD_BIDS_mni'
+output_dir = f'/home/mathilde/Documents/RDS/MELD_FE/DATA/MELD_{site_code}/MELD_BIDS_mni'
 
 # load info histo
 
-df = pd.read_csv('/media/mathilde/MELD2/MELD2/DATA/MELD_H108/MELD_participants_infos_H108.csv') 
+df = pd.read_csv(f'/home/mathilde/Documents/RDS/MELD_FE/DATA/MELD_{site_code}/MELD_participants_infos_{site_code}.csv') 
 
 
 #define subjects
 # subjects = os.listdir(BIDS_dir)
 # print(subjects)
 
-df_include = df[(df['included'].astype('str')=='1.0')&(df['Is this a patient or control?'].astype('str')=='1')].copy()
-#df_include = df[(df['included']==1)&(df['patient_control']==1)].copy()
-#subjects_included= np.array(df_include['id'].values)
-subjects_included= np.array(df_include['MELD Project Anonymous Participant ID'].values)
-
+df_include = df[(df['included']==1)&(df['patient_control']==1)].copy()
+subjects_included= np.array(df_include['id'].values)
+print(subjects_included)
 
 
 for subject in subjects_included:
@@ -53,9 +52,9 @@ for subject in subjects_included:
     output_dir_sub = os.path.join(output_dir,subject)
 
     #get T1 and lesion mask if exists
-    T1_file = glob.glob(os.path.join(BIDS_dir,subject, 'anat','*_preop_T1w.nii.gz'))[0]
+    T1_file = glob.glob(os.path.join(BIDS_dir,subject, 'anat','*_preop_T1w.nii*'))[0]
     try:
-        lesion_mask_file = glob.glob(os.path.join(BIDS_dir,subject, 'anat','*_lesion_mask.nii.gz'))[0]
+        lesion_mask_file = glob.glob(os.path.join(BIDS_dir,subject, 'anat','*_lesion*.nii*'))[0]
     except:
         lesion_mask_file = None
         print(f'no lesion mask for subject {subject}')
