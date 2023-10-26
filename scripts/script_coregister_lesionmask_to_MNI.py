@@ -26,7 +26,7 @@ def harmonise_bids_name(name):
     
     return harmo_name
 
-site_code='H28'
+site_code='H19'
 BIDS_dir = f'/home/mathilde/Documents/RDS/MELD_FE/DATA/MELD_{site_code}/MELD_BIDS'
 ref_file_stripped = '/home/mathilde/Documents/scripts/meld_fe_io/data/template/mni_icbm152_t1_tal_nlin_sym_09a_brain.nii'
 output_dir = f'/home/mathilde/Documents/RDS/MELD_FE/DATA/MELD_{site_code}/MELD_BIDS_mni'
