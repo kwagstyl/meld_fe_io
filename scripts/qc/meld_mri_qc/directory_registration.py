@@ -62,8 +62,8 @@ class DirectoryRegistration:
         markdown_file = config.markdown_file
         html_file = config.html_file
 
-        self.markdown_pth = os.path.join(self.save_dir, markdown_file)
-        self.html_pth = os.path.join(self.save_dir, html_file)
+        self.markdown_pth = os.path.join(self.image_save_dir, markdown_file)
+        self.html_pth = os.path.join(self.image_save_dir, html_file)
         self.markdown_title = config.markdown_title
         self.initialize_markdown()
 
@@ -430,7 +430,7 @@ class DirectoryRegistration:
             md_file.write('---\n\n')  # Horizontal rule
             md_file.write(f'### Case: {case}\n\n')  # New title
 
-        case_img_pth = os.path.join(self.image_save_dir, case)
+        case_img_pth = os.path.join("./", case)  # os.path.join(self.image_save_dir, case)
 
         # adding sagittal
 
