@@ -8,6 +8,7 @@ import pandas as pd
 from displaymod import DisplayModalities
 import markdown
 import re
+import time
 
 
 class DirectoryRegistration:
@@ -365,10 +366,13 @@ class DirectoryRegistration:
         bids_cases = self.directory_cases()
 
         for bids_case in bids_cases:
+            start_time = time.time()
             print(f"Registration starting for case: {bids_case}")
             self.case_registration(bids_case)
 
             print(f"Registration complete for case: {bids_case} \n")
+            end_time = time.time()
+            print(f"Time Elapsed: {end_time-start_time:.2f}")
 
         self.convert_md_to_html()
         self.data_matrix.to_csv(os.path.join(self.save_dir, self.matrix_save_name), index=False)
