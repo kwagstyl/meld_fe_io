@@ -197,7 +197,7 @@ class DirectoryRegistration:
                                  "DWInegPE-Preop Artefact": None, "DWInegPE-Preop Defacing": None,
                                  "Mask Present": [1 if self.mask_pth is not None else 0], "Mask QC": None})
 
-        self.data_matrix = self.data_matrix.append(new_data, ignore_index=True)
+        self.data_matrix = pd.concat([self.data_matrix, new_data], ignore_index=True)
 
     def case_registration(self, case):
 
