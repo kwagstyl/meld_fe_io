@@ -370,9 +370,9 @@ class DirectoryRegistration:
             print(f"Registration starting for case: {bids_case}")
             self.case_registration(bids_case)
 
-            print(f"Registration complete for case: {bids_case} \n")
+            print(f"Registration complete for case: {bids_case}")
             end_time = time.time()
-            print(f"Time Elapsed: {end_time-start_time:.2f}")
+            print(f"Time Elapsed: {end_time-start_time:.2f}\n")
 
         self.convert_md_to_html()
         self.data_matrix.to_csv(os.path.join(self.save_dir, self.matrix_save_name), index=False)
