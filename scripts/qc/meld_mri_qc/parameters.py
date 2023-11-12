@@ -2,14 +2,14 @@ class Config:
 
     def __init__(self):
 
-        ### Note, might want to add a list of subjects
-
-        self.orig_bids_folder = '/Users/niccolo/Documents/UCL/Autumn_2023/meld_mri_qc/Data'
+        self.orig_bids_folder = '/home/nmcconnell/rds/MELD_FE/DATA/MELD_H14/MELD_BIDS/'
 
         # Saving locations:
-        # for registered images
-        self.save_dir = '/Users/niccolo/Documents/UCL/Autumn_2023/meld_mri_qc/gg'  # folder for saving images
-        self.img_save_dir = '/Users/niccolo/Documents/UCL/Autumn_2023/meld_mri_qc/gg/qc_images/'
+        # for registered images:
+        self.save_dir = '/home/nmcconnell/project/qc_data/MELD_H14/QC/save_MELD'  # folder for saving images
+        self.img_save_dir = '/home/nmcconnell/project/qc_data/MELD_H14/QC/save_MELD/qc_images/'
+
+        self.synth_save_dir = '/home/nmcconnell/project/qc_data/MELD_H14/QC/save_MELD/synthseg/'  # None
 
         self.mask_in_flair = False
 
@@ -30,8 +30,9 @@ class Config:
 
         self.html_file = "image_gallery.html"
 
+        self.use_synthseg = True
 
 
 
 
-# worth having qc photo of postop no mask?
+
