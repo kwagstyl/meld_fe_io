@@ -119,27 +119,6 @@ class SynthSegRegistration:
             cmnd = f"mri_synthseg --i {self.save_moving_img_pth} --o {self.flo_seg_warp} --parc"
             subprocess.run(cmnd.split())  # all extras saved to synth_sr_folder
 
-    def final_synthseg(self, input_flo_img):
-
-        if not self.t1_seg_exist:
-            cmnd = f"mri_synthseg --i {self.ref} --o {self.synth_save_dir} --parc"
-            subprocess.run(cmnd.split())  # all extras saved to synth_sr_folder
-
-            cmnd = f"mri_synthseg --i {input_flo_img} --o {self.synth_save_dir} --parc"
-            subprocess.run(cmnd.split())  # all extras saved to synth_sr_folder
-
-            self.ref_seg = os.path.join(self.synth_save_dir,
-                                        os.path.basename(self.ref)).replace(".nii.gz", "_synthseg.nii.gz")
-            self.flo_seg = os.path.join(self.synth_save_dir,
-                                        os.path.basename(input_flo_img)).replace(".nii.gz", "_synthseg.nii.gz")
-
-        else:
-            cmnd = f"mri_synthseg --i {input_flo_img} --o {self.synth_save_dir} --parc --vol"
-            subprocess.run(cmnd.split())  # all extras saved to synth_sr_folder
-
-            self.flo_seg = os.path.join(self.synth_save_dir,
-                                        os.path.basename(input_flo_img)).replace(".nii.gz", "_synthseg.nii.gz")
-
     def register(self, fixed_img_pth, moving_img_pth, save_moving_img_pth,
                  synth_save_dir, fwd_field_pth, is_postop=False):
 
@@ -171,10 +150,10 @@ class SynthSegRegistration:
         # Assuming the volumes contain the same set of labels, we can get the unique labels from one of the volumes
         labels = np.unique(volume1_np)
 
-        dice_scores = [self.calculate_dice(volume1_np, volume2_np, label) for label in labels if label != 0]
+        dice_scores = [round(self.calculate_dice(volume1_np, volume2_np, label), 3) for label in labels if label != 0]
 
-        dice_average = np.mean(dice_scores)
-        dice_stdev = np.std(dice_scores)
+        dice_average = round(np.mean(dice_scores), 3)
+        dice_stdev = round(np.std(dice_scores), 3)
 
         return dice_scores, dice_average, dice_stdev
 
