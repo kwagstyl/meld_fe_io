@@ -6,41 +6,25 @@ import warnings
 
 
 class DisplayModalities:
-    """
-    """
+
     def __init__(self):
         pass
 
     @staticmethod
     def path_validator(path: str):
-        """
-        Validates that directory exists.
-        :param path: path to img
-        """
+
         if not os.path.exists(path):
             raise NotADirectoryError(f"Provided img path {path} does not exist, please enter valid path.")
 
     @staticmethod
     def coords_extract(array: np.array) -> tuple:
-        """
-        Returns midpoint coords of array
-        :param seg_array: rgb np array corresponding to 1 class segmentation file.
-        :return: tuple of chosen coordinates.
-        """
 
         return int(array.shape[0]/2), int(array.shape[1]/2), int(array.shape[2]/2)
 
 
     @staticmethod
     def coords_seg_extract(seg_array: np.array) -> tuple:
-        """
-        Automatically searches through the provided rgb seg array along the x,y, and z axes.
-        Chooses x coord with largest segmentation label area throughout the yz planes.
-        Chooses y coord with largest segmentation label area throughout the xz planes
-        Chooses z coord with largest segmentation label area throughout the xy planes
-        :param seg_array: rgb np array corresponding to 1 class segmentation file.
-        :return: tuple of chosen coordinated.
-        """
+
         x_coord = None
         x_size = 0
         y_coord = None
@@ -66,18 +50,6 @@ class DisplayModalities:
         return x_coord, y_coord, z_coord
 
     def display_image_sag_coron(self, img1, saggital=True, y=None, z=None, save_name=None): #'jet'
-        """
-        Saves 3 image, midpoint +-10
-
-        :param img1: str - path to img 1
-        :param img2: str - path to img 2
-        :param superimpose: bool - True if want segmentation separately superimposed on MRI
-        :param x: int - choosen x coordinate for yz plane
-        :param y: int - choosen y coordinate for xz plane
-        :param z: int - choosen z coordinate for xy plane
-        :param save_name: str - name of saved file if requested.
-        :param colormap: str - chosen colormap.
-        """
 
         if saggital:
 
@@ -124,18 +96,6 @@ class DisplayModalities:
         plt.close()
 
     def display_overlay_sag_coron(self, t1, post_op, seg, saggital=True, y=None, z=None, save_name=None): #'jet'
-        """
-        Saves 3 image, midpoint +-10
-
-        :param img1: str - path to img 1
-        :param img2: str - path to img 2
-        :param superimpose: bool - True if want segmentation separately superimposed on MRI
-        :param x: int - choosen x coordinate for yz plane
-        :param y: int - choosen y coordinate for xz plane
-        :param z: int - choosen z coordinate for xy plane
-        :param save_name: str - name of saved file if requested.
-        :param colormap: str - chosen colormap.
-        """
 
         if saggital:
 

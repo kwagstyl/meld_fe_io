@@ -9,6 +9,7 @@ from displaymod import DisplayModalities
 import markdown
 import re
 import time
+from synthseg_registration import SynthSegRegistration
 
 
 class DirectoryRegistration:
@@ -32,7 +33,9 @@ class DirectoryRegistration:
         self.preop_dwi_tail = config.preop_dwi_tail
         self.preop_DWInegPE_tail = config.preop_DWInegPE_tail
 
-        self.registration_helper = Registration()
+        self.use_synthseg = config.use_synthseg
+
+        self.registration_helper = SynthSegRegistration() if self.use_synthseg else Registration()
 
         self.display_helper = DisplayModalities()
 
@@ -62,10 +65,21 @@ class DirectoryRegistration:
         markdown_file = config.markdown_file
         html_file = config.html_file
 
-        self.markdown_pth = os.path.join(self.save_dir, markdown_file)
-        self.html_pth = os.path.join(self.save_dir, html_file)
+        self.markdown_pth = os.path.join(self.image_save_dir, markdown_file)
+        self.html_pth = os.path.join(self.image_save_dir, html_file)
         self.markdown_title = config.markdown_title
         self.initialize_markdown()
+
+        self.synth_save_dir = config.synth_save_dir
+        self.create_dir(self.synth_save_dir) if self.synth_save_dir is not None else None
+
+        # dice_scores, dice_average, dice_stdev
+        self.flair_dice = None
+        self.t2_dice = None
+        self.t1_postop_dice = None
+        self.mask_dice = None
+        self.preop_dwi_dice = None
+        self.preop_DWInegPE_dice = None
 
     @staticmethod
     def create_dir(dir):
@@ -78,9 +92,10 @@ class DirectoryRegistration:
             columns = ["Subject", "T1-Preop Present", "T1-Preop Correct Mod.", "T1-Preop Artefact", "T1-Preop Defacing",
                        "FLAIR Present", "FLAIR Register", "FLAIR Correct Mod.", "FLAIR Artefact", "FLAIR Defacing",
                        "T2 Present", "T2 Register", "T2 Correct Mod.", "T2 Artefact", "T2 Defacing",
-                       "T1-Postop Present", "T1-Postop Register", "T1-Postop Correct Mod.", "T1-Postop Artefact", "T1-Postop Defacing",
-                       "DWI-Preop Present", "DWI-Preop Register", "DWI-Preop Correct Mod.", "DWI-Preop Artefact", "DWI-Preop Defacing",
-                       "DWInegPE-Preop Present", "DWInegPE-Preop Register", "DWInegPE-Preop Correct Mod.", "DWInegPE-Preop Artefact", "DWInegPE-Preop Defacing",
+                       "T1-Postop Present", "T1-Postop Register", "T1-Postop Correct Mod.", "T1-Postop Artefact",
+                       "T1-Postop Defacing", "DWI-Preop Present", "DWI-Preop Register", "DWI-Preop Correct Mod.",
+                       "DWI-Preop Artefact", "DWI-Preop Defacing", "DWInegPE-Preop Present", "DWInegPE-Preop Register",
+                       "DWInegPE-Preop Correct Mod.", "DWInegPE-Preop Artefact", "DWInegPE-Preop Defacing",
                        "Mask Present", "Mask QC"]
             df = pd.DataFrame(columns=columns)
         else:
@@ -104,6 +119,13 @@ class DirectoryRegistration:
         self.mask_reg = None
         self.preop_dwi_reg = None
         self.preop_DWInegPE_reg = None
+
+        self.flair_dice = None
+        self.t2_dice = None
+        self.t1_postop_dice = None
+        self.mask_dice = None
+        self.preop_dwi_dice = None
+        self.preop_DWInegPE_dice = None
 
     def directory_cases(self):
         return [name for name in os.listdir(self.orig_bids_folder) if "sub" in name]  # this is a list names.
@@ -136,7 +158,6 @@ class DirectoryRegistration:
                 elif filename.lower().endswith(self.preop_DWInegPE_tail.lower()):
                     self.preop_DWInegPE_pth = filename
 
-
     def three_dim_check(self, pth_1):
 
         img_1 = sitk.ReadImage(pth_1)
@@ -147,6 +168,13 @@ class DirectoryRegistration:
         self.registration_helper.set_fixed_img(fixed_img_pth)
         self.registration_helper.registation_trx(moving_img_pth)
         self.registration_helper.transform(moving_img_pth, save_moving_img_pth)
+
+    def synthseg_register(self, fixed_img_pth, moving_img_pth, save_moving_img_pth, synth_save_dir,
+                          fwd_field_pth, is_postop=False):
+
+        return self.registration_helper.register(fixed_img_pth, moving_img_pth,
+                                                 save_moving_img_pth, synth_save_dir,
+                                                 fwd_field_pth, is_postop)
 
     def register_label(self, fixed_img_pth, moving_img_pth, moving_label_pth, save_moving_label_pth):
 
@@ -216,11 +244,11 @@ class DirectoryRegistration:
 
             if os.path.exists(anat_folder_pth):
                 self.create_dir(os.path.join(self.save_dir, case))  # create case folder
-                self.create_dir(save_anat_folder_pth)  # creat anat folder
+                self.create_dir(save_anat_folder_pth)  # create anat folder
 
             if os.path.exists(dwi_folder_pth):
                 self.create_dir(os.path.join(self.save_dir, case))  # create case folder
-                self.create_dir(save_dwi_folder_pth)  # creat anat folder
+                self.create_dir(save_dwi_folder_pth)  # create anat folder
 
             fixed_img_pth = os.path.join(anat_folder_pth, self.t1_pth)
 
@@ -361,6 +389,202 @@ class DirectoryRegistration:
 
             self.add_case_to_markdown(case)
 
+    def synthseg_case_registration(self, case):
+
+        # register everything to t1
+        self.file_names_init()
+        self.modality_check(case)
+
+        anat_folder_pth = os.path.join(self.orig_bids_folder, case, "anat")
+        dwi_folder_pth = os.path.join(self.orig_bids_folder, case, "dwi")
+
+        save_anat_folder_pth = os.path.join(self.save_dir, case, "anat")
+        save_dwi_folder_pth = os.path.join(self.save_dir, case, "dwi")
+
+        save_synth_anat_folder_pth = os.path.join(self.synth_save_dir, case, "anat")
+        save_synth_dwi_folder_pth = os.path.join(self.synth_save_dir, case, "dwi")
+
+        if not os.path.exists(save_anat_folder_pth):  # only do this for not previously done cases
+
+            if os.path.exists(anat_folder_pth):
+                self.create_dir(os.path.join(self.save_dir, case))  # create case folder
+                self.create_dir(save_anat_folder_pth)  # create anat folder
+
+                self.create_dir(os.path.join(self.synth_save_dir, case))  # create case folder
+                self.create_dir(save_synth_anat_folder_pth)  # create anat folder
+
+            if os.path.exists(dwi_folder_pth):
+                self.create_dir(os.path.join(self.save_dir, case))  # create case folder
+                self.create_dir(save_dwi_folder_pth)  # create anat folder
+
+                self.create_dir(os.path.join(self.synth_save_dir, case))  # create case folder
+                self.create_dir(save_synth_dwi_folder_pth)  # create anat folder
+
+            fixed_img_pth = os.path.join(anat_folder_pth, self.t1_pth)
+
+            shutil.copy(fixed_img_pth, os.path.join(save_anat_folder_pth, self.t1_pth))
+
+            if not self.three_dim_check(fixed_img_pth):
+                raise Exception(f"T1 is not 3D for case: {case}")
+            shutil.copy(os.path.join(anat_folder_pth, self.t1_pth.replace(".nii.gz", ".json")),
+                        os.path.join(save_anat_folder_pth, self.t1_pth.replace(".nii.gz", ".json")))
+
+            self.qc_imgs(case, fixed_img_pth, "T1")
+
+            # copy over orig label if mask not in flair modality
+            if not self.mask_in_flair:
+                if self.mask_pth is not None:
+                    if os.path.exists(os.path.join(anat_folder_pth, self.mask_pth)):
+
+                        if self.three_dim_check(os.path.join(anat_folder_pth, self.mask_pth)):
+                            shutil.copy(os.path.join(anat_folder_pth, self.mask_pth), os.path.join(save_anat_folder_pth, self.mask_pth))
+
+                            shutil.copy(os.path.join(anat_folder_pth, self.mask_pth.replace(".nii.gz", ".json")),
+                                        os.path.join(save_anat_folder_pth, self.mask_pth.replace(".nii.gz", ".json")))
+                            self.mask_reg = 1
+                        else:
+                            print(f"Warning: Mask is not 3D for case: {case}")
+
+            # flair
+            if self.flair_pth is not None:
+                moving_img_pth = os.path.join(anat_folder_pth, self.flair_pth)
+
+                if self.three_dim_check(moving_img_pth):
+                    save_moving_img_pth = os.path.join(save_anat_folder_pth, self.flair_pth.replace(".nii.gz", "_space-T1.nii.gz"))
+                    fwd_field_pth = os.path.join(save_synth_anat_folder_pth, "FLAIR_fwdfield.nii.gz")
+
+                    self.flair_dice = self.synthseg_register(fixed_img_pth=fixed_img_pth, moving_img_pth=moving_img_pth,
+                                                             save_moving_img_pth=save_moving_img_pth,
+                                                             synth_save_dir=save_synth_anat_folder_pth,
+                                                             fwd_field_pth=fwd_field_pth, is_postop=False)
+
+                    self.json_edit(json_old_pth=os.path.join(anat_folder_pth, self.flair_pth.replace(".nii.gz", ".json")),
+                                   json_new_pth=os.path.join(save_anat_folder_pth, self.flair_pth.replace(".nii.gz", ".json")),
+                                   value=fixed_img_pth)  # edit json
+                    self.qc_imgs(case, save_moving_img_pth, "FLAIR")
+                    self.flair_reg = 1
+
+                    if self.mask_in_flair:
+                        moving_label_pth = os.path.join(anat_folder_pth, self.mask_pth)
+                        save_moving_label_pth = os.path.join(save_anat_folder_pth, self.mask_pth.replace(".nii.gz", "_space-T1.nii.gz"))
+                        self.register_label(fixed_img_pth, moving_img_pth, moving_label_pth, save_moving_label_pth)
+
+                        self.json_edit(json_old_pth=os.path.join(anat_folder_pth, self.mask_pth.replace(".nii.gz", ".json")),
+                                       json_new_pth=os.path.join(save_anat_folder_pth, self.mask_pth.replace(".nii.gz", ".json")),
+                                       value=fixed_img_pth)  # edit json
+                        self.mask_reg = 1
+                else:
+                    print(f"Warning: Flair is not 3D for case: {case}")
+
+            # T2
+            if self.t2_pth is not None:
+                moving_img_pth = os.path.join(anat_folder_pth, self.t2_pth)
+
+                if self.three_dim_check(moving_img_pth):
+
+                    save_moving_img_pth = os.path.join(save_anat_folder_pth, self.t2_pth.replace(".nii.gz", "_space-T1.nii.gz"))
+                    fwd_field_pth = os.path.join(save_synth_anat_folder_pth, "T2_fwdfield.nii.gz")
+
+                    self.t2_dice = self.synthseg_register(fixed_img_pth=fixed_img_pth, moving_img_pth=moving_img_pth,
+                                                          save_moving_img_pth=save_moving_img_pth,
+                                                          synth_save_dir=save_synth_anat_folder_pth,
+                                                          fwd_field_pth=fwd_field_pth, is_postop=False)
+
+                    self.json_edit(json_old_pth=os.path.join(anat_folder_pth, self.t2_pth.replace(".nii.gz", ".json")),
+                                   json_new_pth=os.path.join(save_anat_folder_pth, self.t2_pth.replace(".nii.gz", ".json")),
+                                   value=fixed_img_pth)  # edit json
+                    self.qc_imgs(case, save_moving_img_pth, "T2")
+                    self.t2_reg = 1
+
+                else:
+                    print(f"Warning: T2 is not 3D for case: {case}")
+
+            # T1 post-op
+            if self.t1_postop_pth is not None:
+                moving_img_pth = os.path.join(anat_folder_pth, self.t1_postop_pth)
+
+                if self.three_dim_check(moving_img_pth):
+
+                    save_moving_img_pth = os.path.join(save_anat_folder_pth, self.t1_postop_pth.replace(".nii.gz", "_space-T1.nii.gz"))
+                    fwd_field_pth = os.path.join(save_synth_anat_folder_pth, "T1postop_fwdfield.nii.gz")
+
+                    self.t1_postop_dice = self.synthseg_register(fixed_img_pth=fixed_img_pth, moving_img_pth=moving_img_pth,
+                                                                 save_moving_img_pth=save_moving_img_pth,
+                                                                 synth_save_dir=save_synth_anat_folder_pth,
+                                                                 fwd_field_pth=fwd_field_pth, is_postop=True)
+
+                    self.json_edit(json_old_pth=os.path.join(anat_folder_pth, self.t1_postop_pth.replace(".nii.gz", ".json")),
+                                   json_new_pth=os.path.join(save_anat_folder_pth, self.t1_postop_pth.replace(".nii.gz", ".json")),
+                                   value=fixed_img_pth)  # edit json
+                    self.qc_imgs(case, save_moving_img_pth, "T1-postop")
+                    self.t1_postop_reg = 1
+
+                else:
+                    print(f"Warning: T1-postop is not 3D for case: {case}")
+
+            # preop_dwi
+            if self.preop_dwi_pth is not None:
+                moving_img_pth = os.path.join(dwi_folder_pth, self.preop_dwi_pth)
+                if self.three_dim_check(moving_img_pth):
+
+                    save_moving_img_pth = os.path.join(save_dwi_folder_pth, self.preop_dwi_pth.replace(".nii.gz", "_space-T1.nii.gz"))
+                    fwd_field_pth = os.path.join(save_synth_dwi_folder_pth, "preop_dwi_fwdfield.nii.gz")
+
+                    self.preop_dwi_dice = self.synthseg_register(fixed_img_pth=fixed_img_pth, moving_img_pth=moving_img_pth,
+                                                                 save_moving_img_pth=save_moving_img_pth,
+                                                                 synth_save_dir=save_synth_dwi_folder_pth,
+                                                                 fwd_field_pth=fwd_field_pth, is_postop=False)
+
+                    self.json_edit(json_old_pth=os.path.join(dwi_folder_pth, self.preop_dwi_pth.replace(".nii.gz", ".json")),
+                                   json_new_pth=os.path.join(save_dwi_folder_pth, self.preop_dwi_pth.replace(".nii.gz", ".json")),
+                                   value=fixed_img_pth)  # edit json
+                    self.qc_imgs(case, save_moving_img_pth, "preop_dwi")
+                    self.preop_dwi_reg = 1
+                else:
+                    print(f"Warning: preop_dwi is not 3D for case: {case}")
+
+            # preop_DWInegPE
+            if self.preop_DWInegPE_pth is not None:
+                moving_img_pth = os.path.join(dwi_folder_pth, self.preop_DWInegPE_pth)
+                if self.three_dim_check(moving_img_pth):
+
+                    save_moving_img_pth = os.path.join(save_dwi_folder_pth, self.preop_DWInegPE_pth.replace(".nii.gz", "_space-T1.nii.gz"))
+                    fwd_field_pth = os.path.join(save_synth_dwi_folder_pth, "preop_DWInegPE_fwdfield.nii.gz")
+
+                    self.preop_DWInegPE_dice = self.synthseg_register(fixed_img_pth=fixed_img_pth, moving_img_pth=moving_img_pth,
+                                                                      save_moving_img_pth=save_moving_img_pth,
+                                                                      synth_save_dir=save_synth_dwi_folder_pth,
+                                                                      fwd_field_pth=fwd_field_pth, is_postop=False)
+
+                    self.json_edit(json_old_pth=os.path.join(dwi_folder_pth, self.preop_DWInegPE_pth.replace(".nii.gz", ".json")),
+                                   json_new_pth=os.path.join(save_dwi_folder_pth, self.preop_DWInegPE_pth.replace(".nii.gz", ".json")),
+                                   value=fixed_img_pth)  # edit json
+                    self.qc_imgs(case, save_moving_img_pth, "preop_DWInegPE")
+                    self.preop_DWInegPE_reg = 1
+                else:
+                    print(f"Warning: preop_DWInegPE is not 3D for case: {case}")
+
+            self.matrix_update(case)
+
+            # overlay qc: #### add option if seg is none
+            if self.mask_pth is not None:
+                if self.mask_in_flair:
+                    self.overlay_qc(case=case,
+                                    t1=os.path.join(save_anat_folder_pth, self.t1_pth),
+                                    post_op=os.path.join(save_anat_folder_pth, self.t1_postop_pth.replace(".nii.gz", "_space-T1.nii.gz")
+                                                         ) if self.t1_postop_pth is not None else None,
+                                    seg=os.path.join(save_anat_folder_pth, self.mask_pth.replace(".nii.gz", "_space-T1.nii.gz")))
+                else:
+                    self.overlay_qc(case=case,
+                                    t1=os.path.join(save_anat_folder_pth, self.t1_pth),
+                                    post_op=os.path.join(save_anat_folder_pth, self.t1_postop_pth.replace(".nii.gz", "_space-T1.nii.gz")
+                                                         ) if self.t1_postop_pth is not None else None,
+                                    seg=os.path.join(save_anat_folder_pth, self.mask_pth))
+            else:
+                print(f"Mask QC not possible as mask not provided for case: {case}")
+
+            self.add_case_to_markdown(case)
+
     def directory_registration(self):
 
         bids_cases = self.directory_cases()
@@ -368,7 +592,7 @@ class DirectoryRegistration:
         for bids_case in bids_cases:
             start_time = time.time()
             print(f"Registration starting for case: {bids_case}")
-            self.case_registration(bids_case)
+            self.case_registration(bids_case) if not self.use_synthseg else self.synthseg_case_registration(bids_case)
 
             print(f"Registration complete for case: {bids_case}")
             end_time = time.time()
@@ -404,14 +628,16 @@ class DirectoryRegistration:
             with open(self.markdown_pth, 'w') as md_file:
                 md_file.write(f"## {self.markdown_title}\n\n")
 
-    def add_image_to_markdown(self, image_path, description):
-        """
-        Add an image reference to a markdown file.
+    def add_dice_scores_to_markdown(self, dice_scores, avg_dice, dice_std):
 
-        :param image_path: Path to the image
-        :param description: Description or alt text for the image
-        :param output_md_file: Path to the markdown file
-        """
+        dice_scores_str = ', '.join(str(score) for score in dice_scores)
+
+        with open(self.markdown_pth, 'a') as md_file:
+            md_file.write(f"**Avg Dice (stdev): {avg_dice} ({dice_std})**\n\n")
+            md_file.write(f"Dice Scores: {dice_scores_str}\n\n")
+
+    def add_image_to_markdown(self, image_path, description):
+
         with open(self.markdown_pth, 'a') as md_file:
             md_file.write(f"##### {description}\n\n")
             md_file.write(f'![{description}]({image_path})\n\n')
@@ -430,16 +656,20 @@ class DirectoryRegistration:
             md_file.write('---\n\n')  # Horizontal rule
             md_file.write(f'### Case: {case}\n\n')  # New title
 
-        case_img_pth = os.path.join(self.image_save_dir, case)
+        case_img_pth = os.path.join("./", case)  # os.path.join(self.image_save_dir, case)
 
         # adding sagittal
-
         self.add_saggital_markdown(case_img_pth, case, modality="T1") if self.t1_pth is not None else None
         self.add_saggital_markdown(case_img_pth, case, modality="FLAIR") if self.flair_reg is not None else None
+        self.add_dice_scores_to_markdown(self.flair_dice[0], self.flair_dice[1], self.flair_dice[2]) if self.flair_dice is not None else None
         self.add_saggital_markdown(case_img_pth, case, modality="T2") if self.t2_reg is not None else None
+        self.add_dice_scores_to_markdown(self.t2_dice[0], self.t2_dice[1], self.t2_dice[2]) if self.t2_dice is not None else None
         self.add_saggital_markdown(case_img_pth, case, modality="T1-postop") if self.t1_postop_reg is not None else None
+        self.add_dice_scores_to_markdown(self.t1_postop_dice[0], self.t1_postop_dice[1], self.t1_postop_dice[2]) if self.t1_postop_dice is not None else None
         self.add_saggital_markdown(case_img_pth, case, modality="preop_dwi") if self.preop_dwi_reg is not None else None
+        self.add_dice_scores_to_markdown(self.preop_dwi_dice[0], self.preop_dwi_dice[1], self.preop_dwi_dice[2]) if self.preop_dwi_dice is not None else None
         self.add_saggital_markdown(case_img_pth, case, modality="preop_DWInegPE") if self.preop_DWInegPE_reg is not None else None
+        self.add_dice_scores_to_markdown(self.preop_DWInegPE_dice[0], self.preop_DWInegPE_dice[1], self.preop_DWInegPE_dice[2]) if self.preop_DWInegPE_dice is not None else None
 
         # adding coronal
         self.add_coronal_markdown(case_img_pth, case, modality="T1") if self.t1_pth is not None else None
