@@ -153,9 +153,14 @@ def check_age_years(value, range=[0,80]):
     error = ""
     return_code = 1
     if not is_nan(value):
-        if not (value>range[0]) or not (value<range[1]):
+        if value==555:
+            return_code = 2
+            error = error + f'Value {value} seems to be months instead of years;'
+        elif not (value>range[0]) or not (value<range[1]):
             return_code = 0
             error = error + f'Value {value} seems to be months instead of years;'
+        else:
+            pass
     return return_code, error 
 
 
@@ -163,9 +168,13 @@ def check_year(value, range=[2000,2024]):
     error = ""
     return_code = 1
     if not is_nan(value):
-        if not (value>range[0]) or not (value<range[1]):
+        if value==555:
+            return_code = 2
+        elif not (value>range[0]) or not (value<range[1]):
             return_code = 0
             error = error + f'Value {value} seems to be a wrong year;'
+        else:
+            pass
     return return_code, error 
 
 
@@ -227,7 +236,7 @@ def qc_demographics(csv_file, site_code, output_file):
         values = {}
         subject=df_row['id']
         # check id, group and sex provided
-        for key in ['id', 'sex', 'patient_control']: 
+        for key in ['id', 'sex', 'patient_control']:
             # check id provided
             test = not is_nan(df_row[key])
             # update code and error
@@ -243,7 +252,7 @@ def qc_demographics(csv_file, site_code, output_file):
         if test==True:
             pass
         else:
-            for key in ['age_at_preop_t1_3t', 'age_at_preop_t1_7t', 'age_at_preop_t1_5t']:
+            for key in ['age_at_preop_t1_3t', 'age_at_preop_t1_7t', 'age_at_preop_t1_15t']:
                 error_code, error = df_qc[df_qc['subject']==subject][[f'{key}.passcheck',f'{key}.error']].values[0]
                 df_qc.loc[df_qc['subject'] == subject, f'{key}.passcheck'] = 0
                 df_qc.loc[df_qc['subject'] == subject, f'{key}.error'] = error +'Age at preoperative is a mandatory information;'
@@ -252,7 +261,7 @@ def qc_demographics(csv_file, site_code, output_file):
         if df_row['patient_control']==1:
             # check age of onset provided and smaller than preop
             key= 'age_at_onset'
-            test = (not is_nan(df_row[key]))
+            test = (not is_nan(df_row[key])) and (not df_row[key]==555)
             if test == True:
                 # test if age of onset younger than age at preop
                 test = (df_row['age_at_onset']<=df_row['age_at_preop_t1'])
