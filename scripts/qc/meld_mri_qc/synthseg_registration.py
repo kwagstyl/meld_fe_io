@@ -48,9 +48,9 @@ class SynthSegRegistration:
         self.t1_seg_exist = any(fname.endswith(self.t1_suffix) for fname in os.listdir(self.synth_save_dir))
 
     def synthsr(self):
-
+        
         cmnd = f"mri_synthsr --i {self.flo} --o {self.synth_save_dir}"
-
+        # print(cmnd)
         subprocess.run(cmnd.split())
 
         self.synthsr_pth = os.path.join(self.synth_save_dir,
@@ -58,25 +58,21 @@ class SynthSegRegistration:
         # example: sub-MELDH14P0013_3T_postop_T1w.nii.gz  -> sub-MELDH14P0013_3T_postop_T1w_synthsr.nii.gz
 
     def synthseg(self, input_flo_img):
+        self.ref_seg = os.path.join(self.synth_save_dir,
+                                        os.path.basename(self.ref)).replace(".nii.gz", "_synthseg.nii.gz")
+        self.flo_seg = os.path.join(self.synth_save_dir,
+                                        os.path.basename(input_flo_img)).replace(".nii.gz", "_synthseg.nii.gz")
 
         if not self.t1_seg_exist:
-            cmnd = f"mri_synthseg --i {self.ref} --o {self.synth_save_dir} --parc"
+            cmnd = f"mri_synthseg --i {self.ref} --o {self.synth_save_dir} --parc --robust --resample {self.synth_save_dir}"
             subprocess.run(cmnd.split())  # all extras saved to synth_sr_folder
 
-            cmnd = f"mri_synthseg --i {input_flo_img} --o {self.synth_save_dir} --parc"
+            cmnd = f"mri_synthseg --i {input_flo_img} --o {self.synth_save_dir} --parc --robust --resample {self.synth_save_dir}"
             subprocess.run(cmnd.split())  # all extras saved to synth_sr_folder
-
-            self.ref_seg = os.path.join(self.synth_save_dir,
-                                        os.path.basename(self.ref)).replace(".nii.gz", "_synthseg.nii.gz")
-            self.flo_seg = os.path.join(self.synth_save_dir,
-                                        os.path.basename(input_flo_img)).replace(".nii.gz", "_synthseg.nii.gz")
-
+  
         else:
-            cmnd = f"mri_synthseg --i {input_flo_img} --o {self.synth_save_dir} --parc --vol"
+            cmnd = f"mri_synthseg --i {input_flo_img} --o {self.synth_save_dir} --parc --robust --resample {self.synth_save_dir}"
             subprocess.run(cmnd.split())  # all extras saved to synth_sr_folder
-
-            self.flo_seg = os.path.join(self.synth_save_dir,
-                                        os.path.basename(input_flo_img)).replace(".nii.gz", "_synthseg.nii.gz")
 
     def easyreg(self):
         if not self.is_postop:
@@ -92,32 +88,32 @@ class SynthSegRegistration:
             subprocess.run(cmnd.split())
 
     def easywarp(self):
-        if not self.is_postop:
-            # use field to warp vol
-            cmnd = f"mri_easywarp --i {self.flo} --o {self.save_moving_img_pth} \
-            --field {self.fwd_field} --nearest"
-            subprocess.run(cmnd.split())
+        # if not self.is_postop:
+        # use field to warp vol
+        cmnd = f"mri_easywarp --i {self.flo} --o {self.save_moving_img_pth} \
+        --field {self.fwd_field} --nearest"
+        subprocess.run(cmnd.split())
 
-            # produce final warped seg
-            # note: all outputs are at 1mm ... hence t1seg may differ in dimension from actual t1
-            # hence now will produce segmentation of transformed image by re-executing segmentation on transformed image.
-            self.flo_seg_warp = os.path.join(self.synth_save_dir,
-                                             os.path.basename(self.flo)).replace(".nii.gz", "_synthseg_warp.nii.gz")
-            cmnd = f"mri_synthseg --i {self.save_moving_img_pth} --o {self.flo_seg_warp} --parc"
-            subprocess.run(cmnd.split())  # all extras saved to synth_sr_folder
+        # produce final warped seg
+        # note: all outputs are at 1mm ... hence t1seg may differ in dimension from actual t1
+        # hence now will produce segmentation of transformed image by re-executing segmentation on transformed image.
+        self.flo_seg_warp = os.path.join(self.synth_save_dir,
+                                            os.path.basename(self.flo)).replace(".nii.gz", "_synthseg_warp.nii.gz")
+        cmnd = f"mri_synthseg --i {self.save_moving_img_pth} --o {self.flo_seg_warp} --parc"
+        subprocess.run(cmnd.split())  # all extras saved to synth_sr_folder
 
-        else:
-            cmnd = f"mri_easywarp --i {self.synthsr_pth} --o {self.save_moving_img_pth} \
-            --field {self.fwd_field} --nearest"
-            subprocess.run(cmnd.split())
+        # else:
+        #     cmnd = f"mri_easywarp --i {self.synthsr_pth} --o {self.save_moving_img_pth} \
+        #     --field {self.fwd_field} --nearest"
+        #     subprocess.run(cmnd.split())
 
-            # produce final warped seg
-            # note: all outputs are at 1mm ... hence t1seg may differ in dimension from actual t1
-            # hence now will produce segmentation of transformed image by re-executing segmentation on transformed image.
-            self.flo_seg_warp = os.path.join(self.synth_save_dir,
-                                             os.path.basename(self.synthsr_pth)).replace(".nii.gz", "_synthseg_warp.nii.gz")
-            cmnd = f"mri_synthseg --i {self.save_moving_img_pth} --o {self.flo_seg_warp} --parc"
-            subprocess.run(cmnd.split())  # all extras saved to synth_sr_folder
+        #     # produce final warped seg
+        #     # note: all outputs are at 1mm ... hence t1seg may differ in dimension from actual t1
+        #     # hence now will produce segmentation of transformed image by re-executing segmentation on transformed image.
+        #     self.flo_seg_warp = os.path.join(self.synth_save_dir,
+        #                                      os.path.basename(self.synthsr_pth)).replace(".nii.gz", "_synthseg_warp.nii.gz")
+        #     cmnd = f"mri_synthseg --i {self.save_moving_img_pth} --o {self.flo_seg_warp} --parc"
+        #     subprocess.run(cmnd.split())  # all extras saved to synth_sr_folder
 
     def register(self, fixed_img_pth, moving_img_pth, save_moving_img_pth,
                  synth_save_dir, fwd_field_pth, is_postop=False):
@@ -125,8 +121,8 @@ class SynthSegRegistration:
         self.set_params(fixed_img_pth, moving_img_pth, save_moving_img_pth,
                         synth_save_dir, fwd_field_pth, is_postop)
 
-        self.synthsr() if self.is_postop else None
-        self.synthseg(self.synthsr_pth) if self.is_postop else self.synthseg(self.flo)
+        self.synthsr() if is_postop else None
+        self.synthseg(self.synthsr_pth) if is_postop else self.synthseg(self.flo)
         self.easyreg()
         self.easywarp()
         return self.dice_calc()
