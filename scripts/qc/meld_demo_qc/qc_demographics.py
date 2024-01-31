@@ -291,18 +291,8 @@ def qc_demographics(csv_file, site_code, output_file):
     df_qc.to_csv(output_file)
     print(f'QC matrix saved at {output_file}')
 
-    #print errors 
-    # for each columns print subject with error and the error
-    for column in columns:
-        try:
-            if (df_qc[column+'.passcheck']==0).any():
-                print(f"Error found in column {column}")
-                failed_row = df_qc.loc[df_qc[column+'.passcheck']==0].index
-                print(f"subjects: {df_qc.loc[failed_row, 'subject'].values}")
-                print(f"errors: {df_qc.loc[failed_row, column+'.error'].values}")
-                print("\n")
-        except:
-            pass
+    return df_qc
+    
 
 if __name__ == '__main__':
     # parse commandline arguments
@@ -332,7 +322,19 @@ if __name__ == '__main__':
  
     output_file = args.output_file
 
-    qc_demographics(csv_file, site_code, output_file)
+    df_qc = qc_demographics(csv_file, site_code, output_file)
     
+    #print errors 
+    # for each columns print subject with error and the error
+    for column in columns:
+        try:
+            if (df_qc[column+'.passcheck']==0).any():
+                print(f"Error found in column {column}")
+                failed_row = df_qc.loc[df_qc[column+'.passcheck']==0].index
+                print(f"subjects: {df_qc.loc[failed_row, 'subject'].values}")
+                print(f"errors: {df_qc.loc[failed_row, column+'.error'].values}")
+                print("\n")
+        except:
+            pass
     
     
