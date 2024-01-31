@@ -49,12 +49,22 @@ class SynthSegRegistration:
 
     def synthsr(self):
         
-        cmnd = f"mri_synthsr --i {self.flo} --o {self.synth_save_dir}"
-        # print(cmnd)
-        subprocess.run(cmnd.split())
-
         self.synthsr_pth = os.path.join(self.synth_save_dir,
                                         os.path.basename(self.flo)).replace(".nii.gz", "_synthsr.nii.gz")
+        if not os.path.isfile(self.synthsr_pth):
+            cmnd = f"mri_synthsr --i {self.flo} --o {self.synth_save_dir}"
+            try:
+                subprocess.run(cmnd.split())  # all extras saved to synth_sr_folder
+            except OSError as e:
+                print(f'COMMAND FAILED: {cmnd} with error {e}')
+                return False
+
+        #check that is has been created and return false if not
+        if not os.path.isfile(self.synthsr_pth):
+            print(f'COMMAND FAILED: {cmnd}')
+            return False
+            
+        return True
         # example: sub-MELDH14P0013_3T_postop_T1w.nii.gz  -> sub-MELDH14P0013_3T_postop_T1w_synthsr.nii.gz
 
     def synthseg(self, input_flo_img):
@@ -64,67 +74,128 @@ class SynthSegRegistration:
                                         os.path.basename(input_flo_img)).replace(".nii.gz", "_synthseg.nii.gz")
 
         if not self.t1_seg_exist:
-            cmnd = f"mri_synthseg --i {self.ref} --o {self.synth_save_dir} --parc --robust --resample {self.synth_save_dir}"
-            subprocess.run(cmnd.split())  # all extras saved to synth_sr_folder
-
-            cmnd = f"mri_synthseg --i {input_flo_img} --o {self.synth_save_dir} --parc --robust --resample {self.synth_save_dir}"
-            subprocess.run(cmnd.split())  # all extras saved to synth_sr_folder
-  
+            if not os.path.isfile(self.ref_seg):
+                cmnd = f"mri_synthseg --i {self.ref} --o {self.synth_save_dir} --parc --robust --resample {self.synth_save_dir}"
+                try:
+                    subprocess.run(cmnd.split())  # all extras saved to synth_sr_folder
+                except OSError as e:
+                    print(f'COMMAND FAILED: {cmnd} with error {e}')
+                    return False
+            #check that is has been created and return false if not
+            if not os.path.isfile(self.ref_seg):
+                print(f'COMMAND FAILED: {cmnd}')
+                return False
+             
+            if not os.path.isfile(self.flo_seg):
+                cmnd = f"mri_synthseg --i {input_flo_img} --o {self.synth_save_dir} --parc --robust --resample {self.synth_save_dir}"
+                try:
+                    subprocess.run(cmnd.split())  # all extras saved to synth_sr_folder
+                except OSError as e:
+                    print(f'COMMAND FAILED: {cmnd} with error {e}')
+                    return False
+            #check that is has been created and return false if not
+            if not os.path.isfile(self.flo_seg):
+                print(f'COMMAND FAILED: {cmnd}')
+                return False
+    
         else:
-            cmnd = f"mri_synthseg --i {input_flo_img} --o {self.synth_save_dir} --parc --robust --resample {self.synth_save_dir}"
-            subprocess.run(cmnd.split())  # all extras saved to synth_sr_folder
+            if not os.path.isfile(self.ref_seg):
+                cmnd = f"mri_synthseg --i {input_flo_img} --o {self.synth_save_dir} --parc --robust --resample {self.synth_save_dir}"
+                try:
+                    subprocess.run(cmnd.split())  # all extras saved to synth_sr_folder
+                except OSError as e:
+                    print(f'COMMAND FAILED: {cmnd} with error {e}')
+                    return False
+            #check that is has been created and return false if not
+            if not os.path.isfile(self.ref_seg):
+                print(f'COMMAND FAILED: {cmnd}')
+                return False
 
+        return True
+    
     def easyreg(self):
         if not self.is_postop:
-            cmnd = f"mri_easyreg --ref {self.ref} --flo {self.flo} \
-            --ref_seg {self.ref_seg} --flo_seg {self.flo_seg} \
-            --fwd_field {self.fwd_field}"
-            subprocess.run(cmnd.split())
-
+            if not os.path.isfile(self.fwd_field):
+                cmnd = f"mri_easyreg --ref {self.ref} --flo {self.flo} \
+                --ref_seg {self.ref_seg} --flo_seg {self.flo_seg} \
+                --fwd_field {self.fwd_field}"
+                try:
+                    subprocess.run(cmnd.split())  # all extras saved to synth_sr_folder
+                except:
+                    print(f'COMMAND FAILED: {cmnd} ')
+                    return False
+        #check that is has been created and return false if not
+            if not os.path.isfile(self.fwd_field):
+                print(f'COMMAND FAILED: {cmnd}')
+                return False
         else:
-            cmnd = f"mri_easyreg --ref {self.ref} --flo {self.synthsr_pth} \
-            --ref_seg {self.ref_seg} --flo_seg {self.flo_seg} \
-            --fwd_field {self.fwd_field}"
-            subprocess.run(cmnd.split())
+            if not os.path.isfile(self.fwd_field):
+                cmnd = f"mri_easyreg --ref {self.ref} --flo {self.synthsr_pth} \
+                --ref_seg {self.ref_seg} --flo_seg {self.flo_seg} \
+                --fwd_field {self.fwd_field}"
+                try:
+                    subprocess.run(cmnd.split())  # all extras saved to synth_sr_folder
+                except:
+                    print(f'COMMAND FAILED: {cmnd}')
+                    return False
 
+            #check that is has been created and return false if not
+            if not os.path.isfile(self.fwd_field):
+                print(f'COMMAND FAILED: {cmnd}')
+                return False
+        return True
+    
     def easywarp(self):
         # if not self.is_postop:
         # use field to warp vol
-        cmnd = f"mri_easywarp --i {self.flo} --o {self.save_moving_img_pth} \
-        --field {self.fwd_field} --nearest"
-        subprocess.run(cmnd.split())
-
+        if not os.path.isfile(self.save_moving_img_pth):
+            cmnd = f"mri_easywarp --i {self.flo} --o {self.save_moving_img_pth} \
+            --field {self.fwd_field} --nearest"
+            try:
+                subprocess.run(cmnd.split())  # all extras saved to synth_sr_folder
+            except OSError as e:
+                print(f'COMMAND FAILED: {cmnd} with error {e}')
+                return False
+        
+        #check that is has been created and return false if not
+        if not os.path.isfile(self.save_moving_img_pth):
+            print(f'COMMAND FAILED: {cmnd}')
+            return False
+    
         # produce final warped seg
         # note: all outputs are at 1mm ... hence t1seg may differ in dimension from actual t1
         # hence now will produce segmentation of transformed image by re-executing segmentation on transformed image.
         self.flo_seg_warp = os.path.join(self.synth_save_dir,
                                             os.path.basename(self.flo)).replace(".nii.gz", "_synthseg_warp.nii.gz")
-        cmnd = f"mri_synthseg --i {self.save_moving_img_pth} --o {self.flo_seg_warp} --parc"
-        subprocess.run(cmnd.split())  # all extras saved to synth_sr_folder
-
-        # else:
-        #     cmnd = f"mri_easywarp --i {self.synthsr_pth} --o {self.save_moving_img_pth} \
-        #     --field {self.fwd_field} --nearest"
-        #     subprocess.run(cmnd.split())
-
-        #     # produce final warped seg
-        #     # note: all outputs are at 1mm ... hence t1seg may differ in dimension from actual t1
-        #     # hence now will produce segmentation of transformed image by re-executing segmentation on transformed image.
-        #     self.flo_seg_warp = os.path.join(self.synth_save_dir,
-        #                                      os.path.basename(self.synthsr_pth)).replace(".nii.gz", "_synthseg_warp.nii.gz")
-        #     cmnd = f"mri_synthseg --i {self.save_moving_img_pth} --o {self.flo_seg_warp} --parc"
-        #     subprocess.run(cmnd.split())  # all extras saved to synth_sr_folder
-
+        if not os.path.isfile(self.flo_seg_warp):
+            cmnd = f"mri_synthseg --i {self.save_moving_img_pth} --o {self.flo_seg_warp} --parc"
+            try:
+                subprocess.run(cmnd.split())  # all extras saved to synth_sr_folder
+            except OSError as e:
+                print(f'COMMAND FAILED: {cmnd} with error {e}')
+                return False
+        
+        return True
+    
     def register(self, fixed_img_pth, moving_img_pth, save_moving_img_pth,
                  synth_save_dir, fwd_field_pth, is_postop=False):
 
         self.set_params(fixed_img_pth, moving_img_pth, save_moving_img_pth,
                         synth_save_dir, fwd_field_pth, is_postop)
 
-        self.synthsr() if is_postop else None
-        self.synthseg(self.synthsr_pth) if is_postop else self.synthseg(self.flo)
-        self.easyreg()
-        self.easywarp()
+        output = self.synthsr() if is_postop else None
+        if output==False:
+            return False
+        output = self.synthseg(self.synthsr_pth) if is_postop else self.synthseg(self.flo)
+        if output==False:
+            return False
+        output = self.easyreg()
+        if output==False:
+            return False
+        output = self.easywarp()
+        if output==False:
+            return False
+        
         return self.dice_calc()
 
     def calculate_dice(self, volume1, volume2, label):
