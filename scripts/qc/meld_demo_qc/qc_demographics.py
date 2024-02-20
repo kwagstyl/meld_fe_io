@@ -186,7 +186,9 @@ def qc_demographics(csv_file, site_code, output_file):
     # print freetext for certain categories
     '''
     df_raw=pd.read_csv(csv_file, index_col=None)
-    df = df_raw.copy()
+    #take only included
+    # df = df_raw.copy()
+    df = df_raw[df_raw['included'] ==1].copy()
     df.head()
 
     #initialise qc dataframe
