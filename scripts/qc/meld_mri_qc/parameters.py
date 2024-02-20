@@ -2,8 +2,8 @@ class Config:
 
     def __init__(self):
 
-        site = 'H115'
-        batch = 'all'
+        site = 'H101'
+        batch = 'controls'
         self.orig_bids_folder = f'/home/mathilde/Documents/RDS/MELD_FE/DATA/MELD_{site}/MELD_BIDS/'
 
         self.list_subjects = f'/home/mathilde/Documents/RDS/MELD_FE/DATA/MELD_{site}/MELD_BIDS_QC/list_subjects_{batch}.csv' #None
@@ -22,7 +22,7 @@ class Config:
         self.t2_tail = "_preop_T2w.nii.gz"  # None
         self.t1_postop_tail = "_postop_T1w.nii.gz"
 
-        self.mask_tail = "_lesion_MASK.nii.gz"
+        self.mask_tail = "_lesion_mask.nii.gz"
 
         self.preop_dwi_tail = "_preop_DWI.nii.gz"
         self.preop_DWInegPE_tail = "_preop_DWInegPE.nii.gz"

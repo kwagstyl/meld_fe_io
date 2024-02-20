@@ -197,6 +197,12 @@ class DirectoryRegistration:
                                                  save_moving_img_pth, synth_save_dir,
                                                  fwd_field_pth, is_postop)
 
+    def synthseg_register_label(self, moving_label_pth, save_moving_label_pth):
+
+        output = self.registration_helper.register_label(moving_label_pth, save_moving_label_pth)
+        if output==False:
+            return False
+       
     def register_label(self, fixed_img_pth, moving_img_pth, moving_label_pth, save_moving_label_pth):
 
         self.registration_helper.set_fixed_img(fixed_img_pth)
@@ -249,182 +255,184 @@ class DirectoryRegistration:
 
         self.data_matrix = pd.concat([self.data_matrix, new_data], ignore_index=True)
 
-    def case_registration(self, case):
+    # def case_registration(self, case):
 
-        # register everything to t1
-        self.file_names_init()
-        self.modality_check(case)
+    #     # register everything to t1
+    #     self.file_names_init()
+    #     self.modality_check(case)
 
-        print("I'm here")
-        anat_folder_pth = os.path.join(self.orig_bids_folder, case, "anat")
-        dwi_folder_pth = os.path.join(self.orig_bids_folder, case, "dwi")
+    #     print("I'm here")
+    #     anat_folder_pth = os.path.join(self.orig_bids_folder, case, "anat")
+    #     dwi_folder_pth = os.path.join(self.orig_bids_folder, case, "dwi")
 
-        save_anat_folder_pth = os.path.join(self.save_dir, case, "anat")
-        save_dwi_folder_pth = os.path.join(self.save_dir, case, "dwi")
+    #     save_anat_folder_pth = os.path.join(self.save_dir, case, "anat")
+    #     save_dwi_folder_pth = os.path.join(self.save_dir, case, "dwi")
 
-        # if not os.path.exists(save_anat_folder_pth):  # only do this for not previously done cases
+    #     # if not os.path.exists(save_anat_folder_pth):  # only do this for not previously done cases
 
-        if os.path.exists(anat_folder_pth):
-            self.create_dir(os.path.join(self.save_dir, case))  # create case folder
-            self.create_dir(save_anat_folder_pth)  # create anat folder
+    #     if os.path.exists(anat_folder_pth):
+    #         self.create_dir(os.path.join(self.save_dir, case))  # create case folder
+    #         self.create_dir(save_anat_folder_pth)  # create anat folder
 
-        if os.path.exists(dwi_folder_pth):
-            self.create_dir(os.path.join(self.save_dir, case))  # create case folder
-            self.create_dir(save_dwi_folder_pth)  # create anat folder
+    #     if os.path.exists(dwi_folder_pth):
+    #         self.create_dir(os.path.join(self.save_dir, case))  # create case folder
+    #         self.create_dir(save_dwi_folder_pth)  # create anat folder
 
-        fixed_img_pth = os.path.join(anat_folder_pth, self.t1_pth)
+    #     fixed_img_pth = os.path.join(anat_folder_pth, self.t1_pth)
+        
+    #     if not os.path.exists(os.path.join(save_anat_folder_pth, self.t1_pth)):
+    #         shutil.copy(fixed_img_pth, os.path.join(save_anat_folder_pth, self.t1_pth))
 
-        shutil.copy(fixed_img_pth, os.path.join(save_anat_folder_pth, self.t1_pth))
+    #     if not self.three_dim_check(fixed_img_pth):
+    #         raise Exception(f"T1 is not 3D for case: {case}")
+    #     if not os.path.exists(os.path.join(save_anat_folder_pth, self.t1_pth.replace(".nii.gz", ".json"))):
+    #         shutil.copy(os.path.join(anat_folder_pth, self.t1_pth.replace(".nii.gz", ".json")),
+    #                     os.path.join(save_anat_folder_pth, self.t1_pth.replace(".nii.gz", ".json")))
 
-        if not self.three_dim_check(fixed_img_pth):
-            raise Exception(f"T1 is not 3D for case: {case}")
-        shutil.copy(os.path.join(anat_folder_pth, self.t1_pth.replace(".nii.gz", ".json")),
-                    os.path.join(save_anat_folder_pth, self.t1_pth.replace(".nii.gz", ".json")))
+    #     self.qc_imgs(case, fixed_img_pth, "T1")
 
-        self.qc_imgs(case, fixed_img_pth, "T1")
+    #     # copy over orig label if mask not in flair modality
+    #     if not self.mask_in_flair:
+    #         if self.mask_pth is not None:
+    #             if os.path.exists(os.path.join(anat_folder_pth, self.mask_pth)):
 
-        # copy over orig label if mask not in flair modality
-        if not self.mask_in_flair:
-            if self.mask_pth is not None:
-                if os.path.exists(os.path.join(anat_folder_pth, self.mask_pth)):
+    #                 if self.three_dim_check(os.path.join(anat_folder_pth, self.mask_pth)):
+    #                     shutil.copy(os.path.join(anat_folder_pth, self.mask_pth), os.path.join(save_anat_folder_pth, self.mask_pth))
 
-                    if self.three_dim_check(os.path.join(anat_folder_pth, self.mask_pth)):
-                        shutil.copy(os.path.join(anat_folder_pth, self.mask_pth), os.path.join(save_anat_folder_pth, self.mask_pth))
+    #                     shutil.copy(os.path.join(anat_folder_pth, self.mask_pth.replace(".nii.gz", ".json")),
+    #                                 os.path.join(save_anat_folder_pth, self.mask_pth.replace(".nii.gz", ".json")))
+    #                     self.mask_reg = 1
+    #                 else:
+    #                     print(f"Warning: Mask is not 3D for case: {case}")
 
-                        shutil.copy(os.path.join(anat_folder_pth, self.mask_pth.replace(".nii.gz", ".json")),
-                                    os.path.join(save_anat_folder_pth, self.mask_pth.replace(".nii.gz", ".json")))
-                        self.mask_reg = 1
-                    else:
-                        print(f"Warning: Mask is not 3D for case: {case}")
+    #         # flair
+    #         if self.flair_pth is not None:
+    #             moving_img_pth = os.path.join(anat_folder_pth, self.flair_pth)
 
-            # flair
-            if self.flair_pth is not None:
-                moving_img_pth = os.path.join(anat_folder_pth, self.flair_pth)
+    #             if self.three_dim_check(moving_img_pth):
+    #                 save_moving_img_pth = os.path.join(save_anat_folder_pth, self.flair_pth.replace(".nii.gz", "_space-T1.nii.gz"))
+    #                 # if not os.path.isfile(save_moving_img_pth):
+    #                 print('register flair')
+    #                 self.register(fixed_img_pth, moving_img_pth, save_moving_img_pth)
+    #                 # else:
+    #                 #     print('flair already registered')
+    #                 self.json_edit(json_old_pth=os.path.join(anat_folder_pth, self.flair_pth.replace(".nii.gz", ".json")),
+    #                                json_new_pth=os.path.join(save_anat_folder_pth, self.flair_pth.replace(".nii.gz", ".json")),
+    #                                value=fixed_img_pth)  # edit json
+    #                 self.qc_imgs(case, save_moving_img_pth, "FLAIR")
+    #                 self.flair_reg = 1
 
-                if self.three_dim_check(moving_img_pth):
-                    save_moving_img_pth = os.path.join(save_anat_folder_pth, self.flair_pth.replace(".nii.gz", "_space-T1.nii.gz"))
-                    # if not os.path.isfile(save_moving_img_pth):
-                    print('register flair')
-                    self.register(fixed_img_pth, moving_img_pth, save_moving_img_pth)
-                    # else:
-                    #     print('flair already registered')
-                    self.json_edit(json_old_pth=os.path.join(anat_folder_pth, self.flair_pth.replace(".nii.gz", ".json")),
-                                   json_new_pth=os.path.join(save_anat_folder_pth, self.flair_pth.replace(".nii.gz", ".json")),
-                                   value=fixed_img_pth)  # edit json
-                    self.qc_imgs(case, save_moving_img_pth, "FLAIR")
-                    self.flair_reg = 1
+    #                 if self.mask_in_flair:
+    #                     moving_label_pth = os.path.join(anat_folder_pth, self.mask_pth)
+    #                     save_moving_label_pth = os.path.join(save_anat_folder_pth, self.mask_pth.replace(".nii.gz", "_space-T1.nii.gz"))
+    #                     self.register_label(fixed_img_pth, moving_img_pth, moving_label_pth, save_moving_label_pth)
 
-                    if self.mask_in_flair:
-                        moving_label_pth = os.path.join(anat_folder_pth, self.mask_pth)
-                        save_moving_label_pth = os.path.join(save_anat_folder_pth, self.mask_pth.replace(".nii.gz", "_space-T1.nii.gz"))
-                        self.register_label(fixed_img_pth, moving_img_pth, moving_label_pth, save_moving_label_pth)
+    #                     self.json_edit(json_old_pth=os.path.join(anat_folder_pth, self.mask_pth.replace(".nii.gz", ".json")),
+    #                                    json_new_pth=os.path.join(save_anat_folder_pth, self.mask_pth.replace(".nii.gz", ".json")),
+    #                                    value=fixed_img_pth)  # edit json
+    #                     self.mask_reg = 1
+    #             else:
+    #                 print(f"Warning: Flair is not 3D for case: {case}")
 
-                        self.json_edit(json_old_pth=os.path.join(anat_folder_pth, self.mask_pth.replace(".nii.gz", ".json")),
-                                       json_new_pth=os.path.join(save_anat_folder_pth, self.mask_pth.replace(".nii.gz", ".json")),
-                                       value=fixed_img_pth)  # edit json
-                        self.mask_reg = 1
-                else:
-                    print(f"Warning: Flair is not 3D for case: {case}")
+    #         # T2
+    #         if self.t2_pth is not None:
+    #             moving_img_pth = os.path.join(anat_folder_pth, self.t2_pth)
+    #             if self.three_dim_check(moving_img_pth):
 
-            # T2
-            if self.t2_pth is not None:
-                moving_img_pth = os.path.join(anat_folder_pth, self.t2_pth)
-                if self.three_dim_check(moving_img_pth):
+    #                 save_moving_img_pth = os.path.join(save_anat_folder_pth, self.t2_pth.replace(".nii.gz", "_space-T1.nii.gz"))
+    #                 # if not os.path.isfile(save_moving_img_pth):
+    #                 print('register T2')
+    #                 self.register(fixed_img_pth, moving_img_pth, save_moving_img_pth)
+    #                 # else:
+    #                 #     print('T2 already registered')
+    #                 self.json_edit(json_old_pth=os.path.join(anat_folder_pth, self.t2_pth.replace(".nii.gz", ".json")),
+    #                                json_new_pth=os.path.join(save_anat_folder_pth, self.t2_pth.replace(".nii.gz", ".json")),
+    #                                value=fixed_img_pth)  # edit json
+    #                 self.qc_imgs(case, save_moving_img_pth, "T2")
+    #                 self.t2_reg = 1
 
-                    save_moving_img_pth = os.path.join(save_anat_folder_pth, self.t2_pth.replace(".nii.gz", "_space-T1.nii.gz"))
-                    # if not os.path.isfile(save_moving_img_pth):
-                    print('register T2')
-                    self.register(fixed_img_pth, moving_img_pth, save_moving_img_pth)
-                    # else:
-                    #     print('T2 already registered')
-                    self.json_edit(json_old_pth=os.path.join(anat_folder_pth, self.t2_pth.replace(".nii.gz", ".json")),
-                                   json_new_pth=os.path.join(save_anat_folder_pth, self.t2_pth.replace(".nii.gz", ".json")),
-                                   value=fixed_img_pth)  # edit json
-                    self.qc_imgs(case, save_moving_img_pth, "T2")
-                    self.t2_reg = 1
-
-                else:
-                    print(f"Warning: T2 is not 3D for case: {case}")
+    #             else:
+    #                 print(f"Warning: T2 is not 3D for case: {case}")
 
 
-            # T1 post-op
-            if self.t1_postop_pth is not None:
-                moving_img_pth = os.path.join(anat_folder_pth, self.t1_postop_pth)
-                if self.three_dim_check(moving_img_pth):
+    #         # T1 post-op
+    #         if self.t1_postop_pth is not None:
+    #             moving_img_pth = os.path.join(anat_folder_pth, self.t1_postop_pth)
+    #             if self.three_dim_check(moving_img_pth):
 
-                    save_moving_img_pth = os.path.join(save_anat_folder_pth, self.t1_postop_pth.replace(".nii.gz", "_space-T1.nii.gz"))
-                    # if not os.path.isfile(save_moving_img_pth):
-                    print('register post-op')
-                    self.register(fixed_img_pth, moving_img_pth, save_moving_img_pth)
-                    # else:
-                    #     print('post-op already registered')
-                    self.json_edit(json_old_pth=os.path.join(anat_folder_pth, self.t1_postop_pth.replace(".nii.gz", ".json")),
-                                   json_new_pth=os.path.join(save_anat_folder_pth, self.t1_postop_pth.replace(".nii.gz", ".json")),
-                                   value=fixed_img_pth)  # edit json
-                    self.qc_imgs(case, save_moving_img_pth, "T1-postop")
-                    self.t1_postop_reg = 1
+    #                 save_moving_img_pth = os.path.join(save_anat_folder_pth, self.t1_postop_pth.replace(".nii.gz", "_space-T1.nii.gz"))
+    #                 # if not os.path.isfile(save_moving_img_pth):
+    #                 print('register post-op')
+    #                 self.register(fixed_img_pth, moving_img_pth, save_moving_img_pth)
+    #                 # else:
+    #                 #     print('post-op already registered')
+    #                 self.json_edit(json_old_pth=os.path.join(anat_folder_pth, self.t1_postop_pth.replace(".nii.gz", ".json")),
+    #                                json_new_pth=os.path.join(save_anat_folder_pth, self.t1_postop_pth.replace(".nii.gz", ".json")),
+    #                                value=fixed_img_pth)  # edit json
+    #                 self.qc_imgs(case, save_moving_img_pth, "T1-postop")
+    #                 self.t1_postop_reg = 1
 
-                else:
-                    print(f"Warning: T1-postop is not 3D for case: {case}")
+    #             else:
+    #                 print(f"Warning: T1-postop is not 3D for case: {case}")
 
-            # preop_dwi
-            if self.preop_dwi_pth is not None:
-                moving_img_pth = os.path.join(dwi_folder_pth, self.preop_dwi_pth)
-                if self.three_dim_check(moving_img_pth):
+    #         # preop_dwi
+    #         if self.preop_dwi_pth is not None:
+    #             moving_img_pth = os.path.join(dwi_folder_pth, self.preop_dwi_pth)
+    #             if self.three_dim_check(moving_img_pth):
 
-                    save_moving_img_pth = os.path.join(save_dwi_folder_pth, self.preop_dwi_pth.replace(".nii.gz", "_space-T1.nii.gz"))
-                    # if not os.path.isfile(save_moving_img_pth):
-                    print('register dwi')
-                    self.register(fixed_img_pth, moving_img_pth, save_moving_img_pth)
-                    # else:
-                    #     print('dwi already registered')
-                    self.json_edit(json_old_pth=os.path.join(dwi_folder_pth, self.preop_dwi_pth.replace(".nii.gz", ".json")),
-                                   json_new_pth=os.path.join(save_dwi_folder_pth, self.preop_dwi_pth.replace(".nii.gz", ".json")),
-                                   value=fixed_img_pth)  # edit json
-                    self.qc_imgs(case, save_moving_img_pth, "preop_dwi")
-                    self.preop_dwi_reg = 1
-                else:
-                    print(f"Warning: preop_dwi is not 3D for case: {case}")
+    #                 save_moving_img_pth = os.path.join(save_dwi_folder_pth, self.preop_dwi_pth.replace(".nii.gz", "_space-T1.nii.gz"))
+    #                 # if not os.path.isfile(save_moving_img_pth):
+    #                 print('register dwi')
+    #                 self.register(fixed_img_pth, moving_img_pth, save_moving_img_pth)
+    #                 # else:
+    #                 #     print('dwi already registered')
+    #                 self.json_edit(json_old_pth=os.path.join(dwi_folder_pth, self.preop_dwi_pth.replace(".nii.gz", ".json")),
+    #                                json_new_pth=os.path.join(save_dwi_folder_pth, self.preop_dwi_pth.replace(".nii.gz", ".json")),
+    #                                value=fixed_img_pth)  # edit json
+    #                 self.qc_imgs(case, save_moving_img_pth, "preop_dwi")
+    #                 self.preop_dwi_reg = 1
+    #             else:
+    #                 print(f"Warning: preop_dwi is not 3D for case: {case}")
 
-            # preop_dwi
-            if self.preop_DWInegPE_pth is not None:
-                moving_img_pth = os.path.join(dwi_folder_pth, self.preop_DWInegPE_pth)
-                if self.three_dim_check(moving_img_pth):
+    #         # preop_dwi
+    #         if self.preop_DWInegPE_pth is not None:
+    #             moving_img_pth = os.path.join(dwi_folder_pth, self.preop_DWInegPE_pth)
+    #             if self.three_dim_check(moving_img_pth):
 
-                    save_moving_img_pth = os.path.join(save_dwi_folder_pth, self.preop_DWInegPE_pth.replace(".nii.gz", "_space-T1.nii.gz"))
-                    # if not os.path.isfile(save_moving_img_pth):
-                    print('register dwinegPE')
-                    self.register(fixed_img_pth, moving_img_pth, save_moving_img_pth)
-                    # else:
-                    #     print('dwinegPE already registered')
-                    self.json_edit(json_old_pth=os.path.join(dwi_folder_pth, self.preop_DWInegPE_pth.replace(".nii.gz", ".json")),
-                                   json_new_pth=os.path.join(save_dwi_folder_pth, self.preop_DWInegPE_pth.replace(".nii.gz", ".json")),
-                                   value=fixed_img_pth)  # edit json
-                    self.qc_imgs(case, save_moving_img_pth, "preop_DWInegPE")
-                    self.preop_DWInegPE_reg = 1
-                else:
-                    print(f"Warning: preop_DWInegPE is not 3D for case: {case}")
+    #                 save_moving_img_pth = os.path.join(save_dwi_folder_pth, self.preop_DWInegPE_pth.replace(".nii.gz", "_space-T1.nii.gz"))
+    #                 # if not os.path.isfile(save_moving_img_pth):
+    #                 print('register dwinegPE')
+    #                 self.register(fixed_img_pth, moving_img_pth, save_moving_img_pth)
+    #                 # else:
+    #                 #     print('dwinegPE already registered')
+    #                 self.json_edit(json_old_pth=os.path.join(dwi_folder_pth, self.preop_DWInegPE_pth.replace(".nii.gz", ".json")),
+    #                                json_new_pth=os.path.join(save_dwi_folder_pth, self.preop_DWInegPE_pth.replace(".nii.gz", ".json")),
+    #                                value=fixed_img_pth)  # edit json
+    #                 self.qc_imgs(case, save_moving_img_pth, "preop_DWInegPE")
+    #                 self.preop_DWInegPE_reg = 1
+    #             else:
+    #                 print(f"Warning: preop_DWInegPE is not 3D for case: {case}")
 
-            self.matrix_update(case)
+    #         self.matrix_update(case)
 
-            # overlay qc: #### add option if seg is none
-            if self.mask_pth is not None:
-                if self.mask_in_flair:
-                    self.overlay_qc(case=case,
-                                    t1=os.path.join(save_anat_folder_pth, self.t1_pth),
-                                    post_op=os.path.join(save_anat_folder_pth, self.t1_postop_pth.replace(".nii.gz", "_space-T1.nii.gz")
-                                                         ) if self.t1_postop_pth is not None else None,
-                                    seg=os.path.join(save_anat_folder_pth, self.mask_pth.replace(".nii.gz", "_space-T1.nii.gz")))
-                else:
-                    self.overlay_qc(case=case,
-                                    t1=os.path.join(save_anat_folder_pth, self.t1_pth),
-                                    post_op=os.path.join(save_anat_folder_pth, self.t1_postop_pth.replace(".nii.gz", "_space-T1.nii.gz")
-                                                         ) if self.t1_postop_pth is not None else None,
-                                    seg=os.path.join(save_anat_folder_pth, self.mask_pth))
-            else:
-                print(f"Mask QC not possible as mask not provided for case: {case}")
+    #         # overlay qc: #### add option if seg is none
+    #         if self.mask_pth is not None:
+    #             if self.mask_in_flair:
+    #                 self.overlay_qc(case=case,
+    #                                 t1=os.path.join(save_anat_folder_pth, self.t1_pth),
+    #                                 post_op=os.path.join(save_anat_folder_pth, self.t1_postop_pth.replace(".nii.gz", "_space-T1.nii.gz")
+    #                                                      ) if self.t1_postop_pth is not None else None,
+    #                                 seg=os.path.join(save_anat_folder_pth, self.mask_pth.replace(".nii.gz", "_space-T1.nii.gz")))
+    #             else:
+    #                 self.overlay_qc(case=case,
+    #                                 t1=os.path.join(save_anat_folder_pth, self.t1_pth),
+    #                                 post_op=os.path.join(save_anat_folder_pth, self.t1_postop_pth.replace(".nii.gz", "_space-T1.nii.gz")
+    #                                                      ) if self.t1_postop_pth is not None else None,
+    #                                 seg=os.path.join(save_anat_folder_pth, self.mask_pth))
+    #         else:
+    #             print(f"Mask QC not possible as mask not provided for case: {case}")
 
-            self.add_case_to_markdown(case)
+    #         self.add_case_to_markdown(case)
 
     def synthseg_case_registration(self, case):
         
@@ -461,7 +469,7 @@ class DirectoryRegistration:
         
         try: 
             fixed_img_pth = os.path.join(anat_folder_pth, self.t1_pth)
-            if os.path.isfile(fixed_img_pth):
+            if (os.path.isfile(fixed_img_pth)) & (not os.path.exists(os.path.join(save_anat_folder_pth, self.t1_pth))):
                 shutil.copy(fixed_img_pth, os.path.join(save_anat_folder_pth, self.t1_pth))
         except:
                 print(f'COPY T1 FAILED with error')
@@ -480,11 +488,12 @@ class DirectoryRegistration:
         if not self.mask_in_flair:
             if self.mask_pth is not None:
                 if os.path.exists(os.path.join(anat_folder_pth, self.mask_pth)):
-
+                    
                     if self.three_dim_check(os.path.join(anat_folder_pth, self.mask_pth)):
-                        shutil.copy(os.path.join(anat_folder_pth, self.mask_pth), os.path.join(save_anat_folder_pth, self.mask_pth))
+                        if not os.path.exists(os.path.join(save_anat_folder_pth, self.mask_pth)):
+                            shutil.copy(os.path.join(anat_folder_pth, self.mask_pth), os.path.join(save_anat_folder_pth, self.mask_pth))
 
-                        shutil.copy(os.path.join(anat_folder_pth, self.mask_pth.replace(".nii.gz", ".json")),
+                            shutil.copy(os.path.join(anat_folder_pth, self.mask_pth.replace(".nii.gz", ".json")),
                                     os.path.join(save_anat_folder_pth, self.mask_pth.replace(".nii.gz", ".json")))
                         self.mask_reg = 1
                     else:
@@ -520,7 +529,9 @@ class DirectoryRegistration:
                         save_moving_label_pth = os.path.join(save_anat_folder_pth, self.mask_pth.replace(".nii.gz", "_space-T1.nii.gz"))
                         # if not os.path.isfile(save_moving_label_pth):
                         print('register lesion mask FLAIR')
-                        self.register_label(fixed_img_pth, moving_img_pth, moving_label_pth, save_moving_label_pth)
+                        # self.register_label(fixed_img_pth, moving_img_pth, moving_label_pth, save_moving_label_pth)
+                        self.synthseg_register_label(moving_label_pth, save_moving_label_pth)
+                        
                         # else:
                         #     print('lesion mask FLAIR already registered')
                         self.json_edit(json_old_pth=os.path.join(anat_folder_pth, self.mask_pth.replace(".nii.gz", ".json")),
@@ -579,9 +590,10 @@ class DirectoryRegistration:
                 # else:
                 #     print('T1 post-op already registered')
                 else:
-                    self.json_edit(json_old_pth=os.path.join(anat_folder_pth, self.t1_postop_pth.replace(".nii.gz", ".json")),
-                                    json_new_pth=os.path.join(save_anat_folder_pth, self.t1_postop_pth.replace(".nii.gz", ".json")),
-                                    value=fixed_img_pth)  # edit json
+                    if not os.path.exists(os.path.join(save_anat_folder_pth, self.t1_postop_pth.replace(".nii.gz", ".json"))):
+                        self.json_edit(json_old_pth=os.path.join(anat_folder_pth, self.t1_postop_pth.replace(".nii.gz", ".json")),
+                                        json_new_pth=os.path.join(save_anat_folder_pth, self.t1_postop_pth.replace(".nii.gz", ".json")),
+                                        value=fixed_img_pth)  # edit json
                     self.qc_imgs(case, save_moving_img_pth, "T1-postop")
                     self.t1_postop_reg = 1
 

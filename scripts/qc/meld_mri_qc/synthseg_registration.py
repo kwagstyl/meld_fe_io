@@ -198,6 +198,23 @@ class SynthSegRegistration:
         
         return self.dice_calc()
 
+    def register_label(self, moving_label_pth, save_moving_label_pth):
+
+        if not os.path.isfile(save_moving_label_pth):
+            cmnd = f"mri_easywarp --i {moving_label_pth} --o {save_moving_label_pth} \
+            --field {self.fwd_field} --nearest"
+            try:
+                subprocess.run(cmnd.split())  # all extras saved to synth_sr_folder
+            except OSError as e:
+                print(f'COMMAND FAILED: {cmnd} with error {e}')
+                return False
+        
+        #check that is has been created and return false if not
+        if not os.path.isfile(self.save_moving_img_pth):
+            print(f'COMMAND FAILED: {cmnd}')
+            return False
+    
+    
     def calculate_dice(self, volume1, volume2, label):
         intersection = np.sum((volume1 == label) & (volume2 == label))
         volume1_count = np.sum(volume1 == label)

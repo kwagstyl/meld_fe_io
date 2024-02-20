@@ -24,7 +24,7 @@ class DisplayModalities:
 
     @staticmethod
     def coords_seg_extract(seg_array: np.array) -> tuple:
-
+        
         x_coord = None
         x_size = 0
         y_coord = None
@@ -97,7 +97,7 @@ class DisplayModalities:
         t1_array = sitk.GetArrayFromImage(sitk.ReadImage(t1, sitk.sitkFloat32))  # convert to sitk object
         postop_array = sitk.GetArrayFromImage(sitk.ReadImage(post_op, sitk.sitkFloat32)) if post_op is not None else None
         seg_array = sitk.GetArrayFromImage(sitk.LabelToRGB(sitk.ReadImage(seg, sitk.sitkInt64)))
-
+        
         if t1_array.shape[0:3] != seg_array.shape[0:3]:
             warnings.warn(f"CAUTION: There is a LABEL array size mismatch between the MR volume (1), {t1}, and {seg}."
                         f"This may affect acuracy of overlapped visualisation.")
