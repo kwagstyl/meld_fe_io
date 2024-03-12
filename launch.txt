@@ -1,0 +1,1 @@
+cd ~/Documents/scripts/meld_fe_io; conda activate meld_fe ; export FREESURFER_HOME=/home/mathilde/Programs/freesurfer_v7.4; source $FREESURFER_HOME/FreeSurferEnv.sh; python scripts/qc/meld_mri_qc/main.py
