@@ -164,7 +164,7 @@ def check_age_years(value, range=[0,80]):
     return return_code, error 
 
 
-def check_year(value, range=[2000,2024]):
+def check_year(value, range=[2000,2025]):
     error = ""
     return_code = 1
     if not is_nan(value):
@@ -199,7 +199,8 @@ def qc_demographics(csv_file, site_code, output_file):
 
     for i, df_row in df.iterrows():
         values={}
-        values['subject']=df_row['id']
+        values['study ID']=df_row['id']
+        values['original ID given by site']=df_row['old_id']
         for column in columns:
             value = df_row[column]
             if column in check_functions:
@@ -245,9 +246,9 @@ def qc_demographics(csv_file, site_code, output_file):
             if test == True:
                 pass
             else:
-                error_code, error = df_qc[df_qc['subject']==subject][[f'{key}.passcheck',f'{key}.error']].values[0]
-                df_qc.loc[df_qc['subject'] == subject, f'{key}.passcheck'] = 0
-                df_qc.loc[df_qc['subject'] == subject, f'{key}.error'] = error +'This is a mandatory information;'
+                error_code, error = df_qc[df_qc['study ID']==subject][[f'{key}.passcheck',f'{key}.error']].values[0]
+                df_qc.loc[df_qc['study ID'] == subject, f'{key}.passcheck'] = 0
+                df_qc.loc[df_qc['study ID'] == subject, f'{key}.error'] = error +'This is a mandatory information;'
         
         # check preop age provided
         test = not is_nan(df_row['age_at_preop_t1'])
@@ -255,9 +256,9 @@ def qc_demographics(csv_file, site_code, output_file):
             pass
         else:
             for key in ['age_at_preop_t1_3t', 'age_at_preop_t1_7t', 'age_at_preop_t1_15t']:
-                error_code, error = df_qc[df_qc['subject']==subject][[f'{key}.passcheck',f'{key}.error']].values[0]
-                df_qc.loc[df_qc['subject'] == subject, f'{key}.passcheck'] = 0
-                df_qc.loc[df_qc['subject'] == subject, f'{key}.error'] = error +'Age at preoperative is a mandatory information;'
+                error_code, error = df_qc[df_qc['study ID']==subject][[f'{key}.passcheck',f'{key}.error']].values[0]
+                df_qc.loc[df_qc['study ID'] == subject, f'{key}.passcheck'] = 0
+                df_qc.loc[df_qc['study ID'] == subject, f'{key}.error'] = error +'Age at preoperative is a mandatory information;'
 
         # only mandatory for patients
         if df_row['patient_control']==1:
@@ -271,13 +272,13 @@ def qc_demographics(csv_file, site_code, output_file):
                 if test == True:
                     pass
                 else:
-                    error_code, error = df_qc[df_qc['subject']==subject][[f'{key}.passcheck',f'{key}.error']].values[0]
-                    df_qc.loc[df_qc['subject'] == subject, f'{key}.passcheck'] = 0
-                    df_qc.loc[df_qc['subject'] == subject, f'{key}.error'] = error +'Age of onset older than age at preop;'
+                    error_code, error = df_qc[df_qc['study ID']==subject][[f'{key}.passcheck',f'{key}.error']].values[0]
+                    df_qc.loc[df_qc['study ID'] == subject, f'{key}.passcheck'] = 0
+                    df_qc.loc[df_qc['study ID'] == subject, f'{key}.error'] = error +'Age of onset older than age at preop;'
             else:
-                error_code, error = df_qc[df_qc['subject']==subject][[f'{key}.passcheck',f'{key}.error']].values[0]
-                df_qc.loc[df_qc['subject'] == subject, f'{key}.passcheck'] = 0
-                df_qc.loc[df_qc['subject'] == subject, f'{key}.error'] = error +'This is a mandatory information;'
+                error_code, error = df_qc[df_qc['study ID']==subject][[f'{key}.passcheck',f'{key}.error']].values[0]
+                df_qc.loc[df_qc['study ID'] == subject, f'{key}.passcheck'] = 0
+                df_qc.loc[df_qc['study ID'] == subject, f'{key}.error'] = error +'This is a mandatory information;'
             
             # check radiology or histology provided
             test = (not is_nan(df_row['radiology'])) or (not is_nan(df_row['histology']))
@@ -285,10 +286,21 @@ def qc_demographics(csv_file, site_code, output_file):
                 pass
             else:
                 for key in ['radiology', 'histology']:
-                    error_code, error = df_qc[df_qc['subject']==subject][[f'{key}.passcheck',f'{key}.error']].values[0]
-                    df_qc.loc[df_qc['subject'] == subject, f'{key}.passcheck'] = 0
-                    df_qc.loc[df_qc['subject'] == subject, f'{key}.error'] = error +'Radiology or Histology are mandatory information;'  
+                    error_code, error = df_qc[df_qc['study ID']==subject][[f'{key}.passcheck',f'{key}.error']].values[0]
+                    df_qc.loc[df_qc['study ID'] == subject, f'{key}.passcheck'] = 0
+                    df_qc.loc[df_qc['study ID'] == subject, f'{key}.error'] = error +'Radiology or Histology are mandatory information;'  
 
+            # check if lesion mask / postop needed (if not HS)
+            if not is_nan(df_row['histology']):
+                if df_row['histology']==10:
+                    df_qc.loc[df_qc['study ID'] == subject, f'need_mask'] = 0
+                else:
+                    df_qc.loc[df_qc['study ID'] == subject, f'need_mask'] = 1
+            else:
+                df_qc.loc[df_qc['study ID'] == subject, f'need_mask'] = np.nan
+        else:
+            df_qc.loc[df_qc['study ID'] == subject, f'need_mask'] = 0
+                
     # save matrix 
     df_qc.to_csv(output_file)
     print(f'QC matrix saved at {output_file}')
