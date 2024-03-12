@@ -32,7 +32,7 @@ class Converter:
         self.case_list = config.case_list  # List[str] - corresponding to HD16 case sub-folders
         self.orig_dir_pth = config.orig_dir_pth   # str - original HD16 data directory location
         self.new_dir_pth = config.new_dir_pth  # str - new BIDS data directory location
-        self.orig_nii_root = config.orig_nii_root  # str - root name of .nii file in HD16
+        self.orig_root = config.orig_root  # str - root name of .nii file in HD16
 
         self.case_anat = None  # path to individual case anat file
 
@@ -130,7 +130,7 @@ class Converter:
         command = shlex.split(command)
         subprocess.run(command, stdout=subprocess.PIPE, universal_newlines=True)
 
-    def transfer_nii(self, case: str):
+    def transfer_anat(self, case: str):
         """
         Copy old anatomical .nii file to new BIDS location while converting old file name to BIDS.
 
@@ -143,11 +143,18 @@ class Converter:
 
         :param case: HD16 case specific sub-folder name
         """
-        nii_name = self.orig_nii_root + "0" + self.case_no_extract(case)[-2:] + ".nii"  # e.g. MELD_H16_3T_FCD_003.nii
-        old_label_pth = os.path.join(self.orig_dir_pth, case, nii_name)
+        # nii_name = self.orig_nii_root + "0" + self.case_no_extract(case)[-2:] + ".nii"  # e.g. MELD_H16_3T_FCD_003.nii
+        anat_name = self.orig_root           
+            
+        old_label_pth = os.path.join(self.orig_dir_pth, case, anat_name)
         new_label_pth = os.path.join(self.case_anat, self.case_name_bidsconvert(case) + "_3T_preop_T1w.nii")
-
-        command = f"scp {old_label_pth} {new_label_pth}"
+        
+        if 'mgz' in anat_name:
+            #convert gmz to nii
+            command = f"mri_convert {old_label_pth} {new_label_pth}"
+        else:
+            command = f"scp {old_label_pth} {new_label_pth}"
+            
         command = shlex.split(command)
         subprocess.run(command, stdout=subprocess.PIPE, universal_newlines=True)
 
@@ -157,7 +164,7 @@ class Converter:
         :param case: HD16 case specific sub-folder name
         """
         self.transfer_label(case)
-        self.transfer_nii(case)
+        self.transfer_anat(case)
 
     def convert_label(self, case: str):
         """

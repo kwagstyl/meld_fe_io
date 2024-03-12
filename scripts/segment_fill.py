@@ -66,7 +66,10 @@ class SegmentationFill:
         sitk.WriteImage(self.sitk_seg, save_pth)
 
 
-# Usage:
+# # Usage:
+
+# seg_pth = '/home/mathilde/Documents/RDS/MELD_FE/DATA/MELD_H16/raw_data/data_meldFCD/MELD_H16_filled/sub-MELDH16P0101/anat/sub-MELDH16P0101_3T_lesion_mask.nii.gz'
+# save_pth = '/home/mathilde/Documents/RDS/MELD_FE/DATA/MELD_H16/raw_data/data_meldFCD/MELD_H16_filled/sub-MELDH16P0101/anat/sub-MELDH16P0101_3T_lesion_mask_filled.nii.gz'
 # fill_helper = SegmentationFill()
 # fill_helper.fill_segmentation(seg_pth, save_pth)
 
