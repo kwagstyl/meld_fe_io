@@ -2,8 +2,8 @@ class Config:
 
     def __init__(self):
 
-        site = 'H101'
-        batch = 'controls'
+        site = 'H16'
+        batch = 'hs'
         self.orig_bids_folder = f'/home/mathilde/Documents/RDS/MELD_FE/DATA/MELD_{site}/MELD_BIDS/'
 
         self.list_subjects = f'/home/mathilde/Documents/RDS/MELD_FE/DATA/MELD_{site}/MELD_BIDS_QC/list_subjects_{batch}.csv' #None

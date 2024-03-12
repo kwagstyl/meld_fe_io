@@ -102,7 +102,7 @@ class DirectoryRegistration:
             descriptions_dict = {"Subject" : np.nan,
                     "Present" : "1-yes, 0-no",
                     "Register" : "1-yes, 0-no",
-                    "Correct Mod." : "1-yes, 2-no wrong sequence, 3-Contrast, 4-possible previous resection, 5-unable to see resection",
+                    "Correct Mod." : "1-yes, 2-no wrong sequence, 3-Contrast, 4-possible previous resection, 5-unable to see resection, 6-problem with file",
                     "Artefact" : "1-no artefact seen, 2-small artefact, 3-large artefact",
                     "FOV" : "1- entire brain 2- cropped",
                     "Defacing" : "1-good defacing, 2-face remaining, 3-small amount of brain removed, 4-large amount of brain removed",
